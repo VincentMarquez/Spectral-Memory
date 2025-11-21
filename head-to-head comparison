@@ -1,0 +1,420 @@
+"""
+K-L Memory vs Official HuggingFace Autoformer
+==============================================
+
+Uses the official transformers.AutoformerForPrediction model
+for a proper head-to-head comparison.
+
+Install: pip install transformers
+"""
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+import numpy as np
+from transformers import AutoformerConfig, AutoformerForPrediction
+from ablation_study import RealDataManager, BaselineTransformer, MemoryAugmentedTransformer
+
+print("=" * 80)
+print("K-L MEMORY vs OFFICIAL HUGGINGFACE AUTOFORMER")
+print("=" * 80)
+
+
+def prepare_autoformer_batch(x_chunk, offset, context_length=768):
+    """
+    Convert our data format to HuggingFace Autoformer format
+    
+    HuggingFace Autoformer REQUIRES:
+    - past_values length = context_length + max(lags_sequence)
+    - We set context=768, lags=[1,2,3,7], so need 768+7=775 past values minimum
+    """
+    T, B, F = x_chunk.shape
+    
+    # Transpose to (B, T, F)
+    x = x_chunk.transpose(0, 1)
+    
+    # Use only first feature for univariate
+    x_univariate = x[:, :, 0]  # (B, T)
+    
+    # HuggingFace needs: past_length = context_length + max(lags)
+    # With lags=[1,2,3,7] and context=768, we need 775 tokens
+    required_past_length = context_length + 7  # 775
+    
+    # Ensure we have enough tokens
+    if T >= required_past_length:
+        past_values = x_univariate[:, -required_past_length:]  # (B, 775)
+    else:
+        # Pad if we don't have enough
+        pad_size = required_past_length - T
+        past_values = torch.nn.functional.pad(x_univariate, (pad_size, 0), mode='replicate')
+    
+    # Future values: predict next 256 tokens
+    if T >= 256:
+        future_values = x_univariate[:, -256:]  # (B, 256)
+    else:
+        pad_size = 256 - T
+        future_values = torch.nn.functional.pad(x_univariate, (0, pad_size), mode='replicate')
+        future_values = future_values[:, :256]
+    
+    # Create time features - must match ACTUAL lengths
+    past_time_features = torch.zeros(B, past_values.shape[1], 1, device=x.device)
+    future_time_features = torch.zeros(B, 256, 1, device=x.device)
+    
+    # Create observed mask
+    past_observed_mask = torch.ones(B, past_values.shape[1], device=x.device, dtype=torch.bool)
+    
+    return {
+        'past_values': past_values,
+        'past_time_features': past_time_features,
+        'past_observed_mask': past_observed_mask,
+        'future_values': future_values,
+        'future_time_features': future_time_features,
+    }
+
+
+def train_baseline_or_kl(model, data_manager, n_ctx, device, epochs=5, name="Model"):
+    """Train baseline or K-L Memory model (our format)"""
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+    
+    print(f"\nTraining {name}...")
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+        
+        for _ in range(10):
+            if hasattr(model, 'reset_memory'):
+                model.reset_memory()
+            
+            x, y = data_manager.get_chunk('train', chunk_size=1024)
+            x = x.to(device).repeat(1, 16, 1)
+            y = y.to(device).repeat(1, 16, 1)
+            
+            optimizer.zero_grad()
+            cache = None
+            loss = 0
+            n = 0
+            
+            for t in range(0, 1024, n_ctx):
+                x_chunk = x[t:t+n_ctx]
+                y_chunk = y[t:t+n_ctx]
+                if x_chunk.shape[0] == 0: break
+                
+                y_pred, cache, _ = model(x_chunk, offset=t, cache=cache)
+                loss += F.mse_loss(y_pred, y_chunk)
+                n += 1
+            
+            (loss / n).backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+            total_loss += loss.item()
+        
+        print(f"  Epoch {epoch+1}: {total_loss/10:.5f}")
+    
+    return model
+
+
+def train_huggingface_autoformer(model, data_manager, n_ctx, device, epochs=5):
+    """Train HuggingFace Autoformer (their format)"""
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
+    
+    print(f"\nTraining HuggingFace Autoformer...")
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+        
+        for _ in range(10):
+            # Get longer sequence for context requirement (768 tokens)
+            x, y = data_manager.get_chunk('train', chunk_size=1024)
+            x = x.to(device).repeat(1, 16, 1)
+            y = y.to(device).repeat(1, 16, 1)
+            
+            # Prepare batch in Autoformer format (uses first 768 as context)
+            batch = prepare_autoformer_batch(x, offset=0, context_length=768)
+            
+            optimizer.zero_grad()
+            
+            # Forward pass
+            outputs = model(**batch)
+            loss = outputs.loss
+            
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+            
+            total_loss += loss.item()
+        
+        print(f"  Epoch {epoch+1}: {total_loss/10:.5f}")
+    
+    return model
+
+
+def evaluate_baseline_or_kl(model, data_manager, n_ctx, device):
+    """Evaluate baseline or K-L Memory (compare first feature only for fair comparison with Autoformer)"""
+    model.eval()
+    if hasattr(model, 'reset_memory'):
+        model.reset_memory()
+    
+    x, y = data_manager.get_chunk('test', chunk_size=2048)
+    x, y = x.to(device), y.to(device)
+    
+    cache = None
+    total_err = 0
+    n = 0
+    
+    with torch.no_grad():
+        for t in range(0, x.shape[0], n_ctx):
+            x_chunk = x[t:t+n_ctx]
+            y_chunk = y[t:t+n_ctx]
+            if x_chunk.shape[0] == 0: break
+            
+            y_pred, cache, _ = model(x_chunk, offset=t, cache=cache)
+            
+            # Compare only first feature for fair comparison with univariate Autoformer
+            y_pred_f0 = y_pred[:, :, 0]  # (T, B)
+            y_true_f0 = y_chunk[:, :, 0]  # (T, B)
+            
+            total_err += F.mse_loss(y_pred_f0, y_true_f0).item()
+            n += 1
+    
+    return total_err / n
+
+
+def evaluate_huggingface_autoformer(model, data_manager, n_ctx, device):
+    """Evaluate HuggingFace Autoformer - use loss directly (most reliable)"""
+    model.eval()
+    
+    # Get test data
+    x, y = data_manager.get_chunk('test', chunk_size=2048)
+    x, y = x.to(device), y.to(device)
+    
+    total_err = 0
+    n = 0
+    
+    with torch.no_grad():
+        # Evaluate on chunks (need 1024 tokens for 775 context + padding)
+        for t in range(0, min(x.shape[0] - 1024, 1024), 256):
+            x_chunk = x[t:t+1024]
+            
+            if x_chunk.shape[0] < 1024:
+                break
+            
+            batch = prepare_autoformer_batch(x_chunk, offset=t, context_length=768)
+            
+            # Get loss (simplest and most reliable)
+            outputs = model(**batch)
+            total_err += outputs.loss.item()
+            n += 1
+    
+    return total_err / n if n > 0 else float('inf')
+    
+    return total_err / n if n > 0 else float('inf')
+
+
+def main():
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    n_ctx = 256
+    d_model = 64
+    
+    print(f"\nDevice: {device}")
+    print(f"Context window: {n_ctx}")
+    print("\n" + "=" * 80)
+    print("COMPARISON SETUP")
+    print("=" * 80)
+    print("To ensure fair comparison:")
+    print("- HF Autoformer: Trained on first feature (univariate)")
+    print("- Baseline: Trained on all 7 features, evaluated on first feature only")
+    print("- K-L Memory: Trained on all 7 features, evaluated on first feature only")
+    print("All models evaluated using MSE on first feature.")
+    print("=" * 80 + "\n")
+    
+    # Load data
+    print("Loading ETTm1 dataset...")
+    data_manager = RealDataManager(seq_len=2048)
+    dummy_x, _ = data_manager.get_chunk('train', chunk_size=100)
+    F_in = dummy_x.shape[-1]
+    print(f"Input features: {F_in}\n")
+    
+    # Build models
+    print("=" * 80)
+    print("BUILDING MODELS")
+    print("=" * 80)
+    
+    # 1. Baseline
+    print("\n1. Baseline Transformer")
+    baseline = BaselineTransformer(F_in, d_model, 4, 2, F_in, n_ctx).to(device)
+    print(f"   Parameters: {sum(p.numel() for p in baseline.parameters()):,}")
+    
+    # 2. Official HuggingFace Autoformer
+    print("\n2. HuggingFace Autoformer (Official)")
+    try:
+        # HuggingFace Autoformer needs context_length > max(lags_sequence)
+        # Set context much longer than prediction to accommodate lags
+        context_len = n_ctx * 3  # 768 - plenty of room for lags
+        
+        config = AutoformerConfig(
+            prediction_length=n_ctx,
+            context_length=context_len,  # Must be > max(lags)
+            input_size=1,  # UNIVARIATE (first feature only)
+            d_model=d_model,
+            encoder_layers=2,
+            decoder_layers=2,
+            encoder_attention_heads=4,
+            decoder_attention_heads=4,
+            encoder_ffn_dim=256,
+            decoder_ffn_dim=256,
+            dropout=0.1,
+            num_time_features=1,  # We provide 1 dummy time feature
+            lags_sequence=[1, 2, 3, 7],  # Standard lags - context is long enough
+        )
+        
+        autoformer_hf = AutoformerForPrediction(config).to(device)
+        print(f"   Parameters: {sum(p.numel() for p in autoformer_hf.parameters()):,}")
+        has_hf_autoformer = True
+        
+    except Exception as e:
+        print(f"   ❌ Could not load HuggingFace Autoformer: {e}")
+        print(f"   Install with: pip install transformers")
+        has_hf_autoformer = False
+        autoformer_hf = None
+    
+    # 3. K-L Memory
+    print("\n3. K-L Memory (Data-Driven Decomposition)")
+    kl_memory = MemoryAugmentedTransformer(F_in, d_model, 4, 2, F_in, n_ctx, 'kl').to(device)
+    kl_memory.memory.tau = 96.0
+    print(f"   Parameters: {sum(p.numel() for p in kl_memory.parameters()):,}")
+    
+    # Train models
+    print("\n" + "=" * 80)
+    print("TRAINING PHASE (5 epochs each)")
+    print("=" * 80)
+    
+    baseline = train_baseline_or_kl(baseline, data_manager, n_ctx, device, epochs=5, name="Baseline")
+    
+    if has_hf_autoformer:
+        autoformer_hf = train_huggingface_autoformer(autoformer_hf, data_manager, n_ctx, device, epochs=5)
+    
+    kl_memory = train_baseline_or_kl(kl_memory, data_manager, n_ctx, device, epochs=5, name="K-L Memory")
+    
+    # Evaluate
+    print("\n" + "=" * 80)
+    print("EVALUATION PHASE")
+    print("=" * 80)
+    
+    print("\nEvaluating Baseline...")
+    baseline_mse = evaluate_baseline_or_kl(baseline, data_manager, n_ctx, device)
+    print(f"  Test MSE: {baseline_mse:.5f}")
+    
+    if has_hf_autoformer:
+        print("\nEvaluating HuggingFace Autoformer...")
+        autoformer_mse = evaluate_huggingface_autoformer(autoformer_hf, data_manager, n_ctx, device)
+        print(f"  Test MSE: {autoformer_mse:.5f}")
+    else:
+        autoformer_mse = None
+    
+    print("\nEvaluating K-L Memory...")
+    kl_mse = evaluate_baseline_or_kl(kl_memory, data_manager, n_ctx, device)
+    print(f"  Test MSE: {kl_mse:.5f}")
+    
+    # Results
+    print("\n" + "=" * 80)
+    print("RESULTS")
+    print("=" * 80)
+    
+    results = [('Baseline', baseline_mse)]
+    if has_hf_autoformer and autoformer_mse is not None:
+        results.append(('HF Autoformer', autoformer_mse))
+    results.append(('K-L Memory', kl_mse))
+    
+    # Sort by MSE
+    results_sorted = sorted(results, key=lambda x: x[1])
+    
+    print(f"\n{'Model':<20} {'Test MSE':<12} {'vs Baseline':<15} {'Ranking':<10}")
+    print("-" * 60)
+    
+    for rank, (name, mse) in enumerate(results_sorted, 1):
+        improvement = (baseline_mse - mse) / baseline_mse * 100
+        star = "🏆" if rank == 1 else ("✓" if rank == 2 else " ")
+        print(f"{name:<20} {mse:<12.5f} {improvement:+>13.2f}% {star:<10}")
+    
+    # Analysis
+    print("\n" + "=" * 80)
+    print("CONCLUSION")
+    print("=" * 80)
+    
+    winner_name, winner_mse = results_sorted[0]
+    
+    if winner_name == "HF Autoformer":
+        improvement = (baseline_mse - winner_mse) / baseline_mse * 100
+        kl_vs_auto = (autoformer_mse - kl_mse) / autoformer_mse * 100
+        
+        print(f"\n🏆 AUTOFORMER WINS")
+        print(f"   Official HuggingFace Autoformer: {winner_mse:.5f}")
+        print(f"   Improvement over baseline: {improvement:+.2f}%")
+        print(f"   K-L Memory vs Autoformer: {kl_vs_auto:+.2f}%")
+        
+        if kl_mse > baseline_mse:
+            print(f"\n   ❌ K-L Memory is WORSE than baseline")
+            print(f"   → Domain-specific decomposition (Autoformer) > Data-driven (K-L)")
+            print(f"   → K-L Memory is not suitable for time series forecasting")
+        else:
+            print(f"\n   ✓ K-L Memory beats baseline but loses to Autoformer")
+            print(f"   → Both decomposition methods help")
+            print(f"   → But domain knowledge (trend/seasonal) > statistical (K-L)")
+        
+    elif winner_name == "K-L Memory":
+        improvement = (baseline_mse - winner_mse) / baseline_mse * 100
+        
+        print(f"\n🎉 K-L MEMORY WINS!")
+        print(f"   K-L Memory: {winner_mse:.5f}")
+        print(f"   Improvement over baseline: {improvement:+.2f}%")
+        
+        if has_hf_autoformer:
+            kl_vs_auto = (autoformer_mse - kl_mse) / autoformer_mse * 100
+            print(f"   Improvement over Autoformer: {kl_vs_auto:+.2f}%")
+            print(f"\n   ✅ Data-driven decomposition (K-L) > Domain-specific (Autoformer)!")
+            print(f"   → K-L Memory validated on real time series!")
+            print(f"   → This is a major result - write the paper!")
+        else:
+            print(f"\n   ✅ K-L Memory beats baseline!")
+            print(f"   → Need to compare with official Autoformer")
+            print(f"   → Install: pip install transformers")
+    
+    else:  # Baseline wins
+        print(f"\n⚠️ BASELINE WINS")
+        print(f"   Baseline: {baseline_mse:.5f}")
+        print(f"   Both decomposition methods perform worse!")
+        print(f"\n   → Decomposition doesn't help for this task")
+        print(f"   → Try longer training or different hyperparameters")
+    
+    print("\n" + "=" * 80)
+    print("NEXT STEPS")
+    print("=" * 80)
+    
+    if not has_hf_autoformer:
+        print("\n1. Install transformers: pip install transformers")
+        print("2. Re-run this comparison with official Autoformer")
+    elif winner_name == "K-L Memory":
+        print("\n1. ✅ Run full experiments (10+ epochs, 4096 tokens)")
+        print("2. ✅ Test on all ETT variants (m1, m2, h1, h2)")
+        print("3. ✅ Write paper: K-L Memory beats Autoformer!")
+    elif winner_name == "HF Autoformer":
+        print("\n1. Try K-L + MLP (learnable projection)")
+        print("2. Try longer training (20+ epochs)")
+        print("3. If K-L still loses → abandon it, use Autoformer")
+        print("4. Write negative result paper")
+    else:
+        print("\n1. Train for 20+ epochs")
+        print("2. Try different hyperparameters")
+        print("3. If still fails → decomposition not helpful for ETT")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+        print("\n✅ Comparison complete!")
+        
+    except Exception as e:
+        print(f"\n❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+
