@@ -176,6 +176,40 @@ memory_tokens = self.component_mixer(patterns)  # Learnable projection
 - [iTransformer Paper](https://arxiv.org/pdf/2510.02729) - Current SOTA comparison
 - [Time Series Library](https://github.com/thuml/Time-Series-Library) - Benchmark implementation
 
+## Citation
+
+If you use this code or build upon the K-L Memory methodology in your research, please cite it in your publications and give appropriate credit.
+
+### Recommended Citation Format
+
+```
+Marquez, Vincent. (2024). K-L Memory. GitHub repository: https://github.com/[yourusername]/K-L-Memory
+```
+
+Or in BibTeX format:
+
+```bibtex
+@software{kl_memory,
+  author = {Marquez, Vincent},
+  title = {K-L Memory},
+  year = {2025},
+  publisher = {GitHub},
+  url = {https://github.com/[vincentmarquez]/K-L-Memory}
+}
+```
+
+## Attribution
+
+If you use this vision, methodology, or code in your work, please:
+- Provide clear attribution to Vincent Marquez in your paper's acknowledgments or methods section
+- Reference the K-L Memory repository when describing derived work
+- Maintain this notice in any derivative works or forks
+
+Thank you for respecting the effort that went into developing this work.
+
+
+
+
 ## 📧 Contact
 
 For questions or collaborations, please open an issue or contact [vincentmarquez405@gmail.com].
