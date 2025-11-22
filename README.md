@@ -170,18 +170,7 @@ memory_tokens = self.component_mixer(patterns)  # Learnable projection
 - **RevIN normalization** - handles non-stationary data
 - **Principal Temporal Patterns** - eigen-features extracted on the fly
 
-## 📝 Citation
 
-If you use K-L-Memory in your research, please cite:
-```bibtex
-@article{klmemory2024,
-  title={Karhunen-Loève Memory Tokens: Structured Temporal Compression 
-         with Learnable Projection for Long-Context Transformers},
-  author={Anonymous},
-  journal={arXiv preprint},
-  year={2024}
-}
-```
 
 ## 🔗 References - See paper for more 
 
