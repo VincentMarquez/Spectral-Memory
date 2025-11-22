@@ -12,6 +12,8 @@ Unlike purely learned compression methods, K-L-Memory uses spectral decompositio
 - **Task adaptation** through gradient-based learning
 - **Provable optimality** in window complexity reduction (see Theorem 1 in paper)
 
+**Note:** All results were achieved without any pre-training - the model was trained from scratch in just 10 epochs with early stopping (patience=3), demonstrating that the K-L decomposition provides strong enough inductive bias for rapid convergence.
+  
 ## 🚀 Performance Results
 
 ### ETTh1 Long-Term Forecasting
