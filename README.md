@@ -43,9 +43,7 @@ We evaluate on the standard ETTh1 benchmark with input length 96 and prediction 
 # Install dependencies
 pip install torch pandas numpy scikit-learn
 
-# Clone repository
-git clone https://github.com/[your-username]/K-L-Memory.git
-cd K-L-Memory
+
 
 # Download ETTh1 dataset
 wget https://github.com/zhouhaoyi/ETDataset/raw/main/ETT-small/ETTh1.csv -P ./dataset/
