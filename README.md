@@ -48,21 +48,7 @@ Key Results (Best Run):
 
 
 
-| Model | Horizon 96 | Horizon 192 | Horizon 336 | Horizon 720 | Avg MSE | Improvement |
-|-------|-----------|-------------|-------------|-------------|---------|-------------|
-| **MSE** | | | | | | |
-| Transformer | 0.865 | 0.984 | 1.128 | 1.388 | 1.091 | - |
-| Autoformer | 0.449 | 0.500 | 0.521 | 0.664 | 0.534 | - |
-| **K-L-Memory (Ours)** | **0.387** | **0.425** | **0.452** | **0.607** | **0.468** | **-12.6%** |
-| **MAE** | | | | | | |
-| Transformer | 0.713 | 0.757 | 0.809 | 0.991 | 0.818 | - |
-| Autoformer | 0.459 | 0.479 | 0.491 | 0.575 | 0.501 | - |
-| **K-L-Memory (Ours)** | **0.408** | **0.430** | **0.448** | **0.531** | **0.454** | **-8.3%** |
 
-**Key Results:**
-- 🏆 **12.6% MSE reduction** over Autoformer (averaged across all horizons)
-- 🏆 **57% MSE reduction** over vanilla Transformer
-- 🏆 Strongest improvements on shorter horizons (13-15% for h ∈ {96, 192})
 
 ## 🔧 Reproducing Results
 
