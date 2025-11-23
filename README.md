@@ -57,7 +57,12 @@ Key Results (Best Run):
 # Install dependencies
 pip install torch pandas numpy scikit-learn
 
+## Hardware & Training
 
+- **Device**: Apple M4 Mac Mini  
+- **Memory**: 16 GB unified  
+- **Training**: CPU-only  
+- **Total time to SOTA**: 9 hours
 
 # Download ETTh1 dataset
 wget https://github.com/zhouhaoyi/ETDataset/raw/main/ETT-small/ETTh1.csv -P ./dataset/
