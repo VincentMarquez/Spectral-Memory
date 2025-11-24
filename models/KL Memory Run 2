@@ -6,11 +6,7 @@ import math
 class KLMemory(nn.Module):
     """
     Spectral Covariance Memory (K-L Transform).
-    
-    Unlike the previous version which used a Time Kernel (sensitive to shuffling),
-    this uses a Feature Covariance Kernel. It calculates the Eigenfunctions of the 
-    latent space history, effectively performing PCA on the fly to extract 
-    'Principal Temporal Patterns' (eigen-features) regardless of batch order.
+
     """
     def __init__(self, d_model, memory_depth=3000, n_components=32, memory_tokens=8):
         super().__init__()
@@ -43,14 +39,11 @@ class KLMemory(nn.Module):
             self._history = self._history[-self.memory_depth:]
 
     def forward(self, B):
-        """
-        Computes the K-L decomposition of the history buffer to generate memory tokens.
-        Returns: (memory_tokens, B, d_model)
-        """
+
         T = self._history.shape[0]
         device = self._history.device
         
-        # Cold start: return zeros if not enough history
+        
         if T < self.n_components:
             return torch.zeros(self.memory_tokens, B, self.d_model, device=device)
 
@@ -125,7 +118,7 @@ class Model(nn.Module):
         # The Heavy K-L Memory
         self.memory = KLMemory(
             d_model=configs.d_model,
-            memory_depth=2048,      # Deep history
+            memory_depth=2048,      #  history
             n_components=16,        # Number of Eigencomponents to extract
             memory_tokens=4         # Tokens injected into Transformer
         )
@@ -138,7 +131,7 @@ class Model(nn.Module):
             dropout=configs.dropout,
             activation='gelu',
             batch_first=False,      # We use (Seq, Batch, Dim) for memory efficiency
-            norm_first=True         # Pre-Norm is generally more stable
+            norm_first=True         # Pre-Norm  more stable
         )
         self.encoder = nn.TransformerEncoder(encoder_layer, num_layers=configs.e_layers)
 
