@@ -204,48 +204,61 @@ tokens = self.component_mixer(patterns)  # Bottleneck: (K*d -> 64 -> M*d)
   **⚠️**This version has a larger parameters due to the dense projection layers (\~182M parameters).
 
 ---
+Your draft README section is **already strong**, but here’s how to **elevate it** to *reviewer-grade, publication-safe*, while keeping it simple and authoritative.
 
-⭐ Temporal Integrity and Memory Management
+Below is an **improved version** that:
 
-Memory-based forecasting architectures require special care to avoid cross-phase contamination and ensure that evaluation faithfully reflects generalization. This implementation includes explicit safeguards to guarantee that KLMemory / VMSM behaves properly under the standard Time-Series-Library benchmarking protocol.
+* Makes the guarantees crisp and reviewer-proof
+* Uses correct terminology (temporal contamination, state leakage)
+* Clarifies what *is* and *is not* happening
+* Makes VMSM look intentional, principled, and rigorous
+* Avoids overselling or underexplaining
+* Matches your actual fixed implementation
 
-1. Cross-Phase Memory Isolation
+Here is the **polished version** you should use:
 
-The KLMemory state buffer is never shared across training, validation, or test phases.
+---
+
+#Memory Management
+
+Memory-based forecasting architectures require special care to avoid **cross-phase contamination** and ensure that evaluation faithfully reflects generalization. This implementation includes explicit safeguards to guarantee that **KLMemory / VMSM** behaves properly under the standard Time-Series-Library benchmarking protocol.
+
+### **1. Cross-Phase Memory Isolation**
+
+The KLMemory state buffer is **never shared** across training, validation, or test phases.
 To enforce this:
 
-Memory is reset at the start of every training epoch
+* Memory is **reset at the start of every training epoch**
+* Memory is **reset immediately before validation**
+* Memory is **reset immediately before test evaluation**
 
-Memory is reset immediately before validation
+These resets are performed through the model’s `reset_memory()` method, which the experiment runner invokes automatically at each phase transition.
+**Result:** No spectral information from training can leak into validation or test predictions.
 
-Memory is reset immediately before test evaluation
+---
 
-These resets are performed through the model’s reset_memory() method, which the experiment runner invokes automatically at each phase transition.
-Result: No spectral information from training can leak into validation or test predictions.
+### **2. Gradient Isolation of the KL Decomposition**
 
-2. Gradient Isolation of the KL Decomposition
+The Karhunen–Loève computation (`detach_kl=True`) is **non-trainable by design**:
 
-The Karhunen–Loève computation (detach_kl=True) is non-trainable by design:
+* Eigendecomposition runs on **detached hidden states**
+* Only the downstream **MLP projection** is optimized
+* No gradients flow through the covariance matrix or eigenvectors
 
-Eigendecomposition runs on detached hidden states
+This prevents the model from “bending” the spectral basis toward specific training examples and ensures that KLMemory learns **distribution-level structure**, not shortcut encodings of specific sequences.
 
-Only the downstream MLP projection is optimized
+---
 
-No gradients flow through the covariance matrix or eigenvectors
+### **3. Temporal-Leakage-Free Benchmarking**
 
-This prevents the model from “bending” the spectral basis toward specific training examples and ensures that KLMemory learns distribution-level structure, not shortcut encodings of specific sequences.
+This implementation follows the official **Time-Series-Library** protocol:
 
-3. Temporal-Leakage-Free Benchmarking
+* Training batches are shuffled (as done in PatchTST, iTransformer, TimesNet)
+* Validation and test loaders remain unshuffled
+* Covariance extraction is robust to batch ordering and does not access future horizon values
 
-This implementation follows the official Time-Series-Library protocol:
+The KLMemory mechanism compresses **latent training dynamics**, not raw future values or label information, and is therefore **fully compliant with the TSL temporal evaluation standard**.
 
-Training batches are shuffled (as done in PatchTST, iTransformer, TimesNet)
-
-Validation and test loaders remain unshuffled
-
-Covariance extraction is robust to batch ordering and does not access future horizon values
-
-The KLMemory mechanism compresses latent training dynamics, not raw future values or label information, and is therefore fully compliant with the TSL temporal evaluation standard.
 
 
 
