@@ -30,7 +30,7 @@ We evaluate on the standard ETTh1 benchmark with input length 96 and prediction 
 
 Run 3 & 4 -> Will add final numbers
 
-#### Run 1 (best reported)
+#### Run 1 
 | Horizon | MSE   | MAE   |
 |---------|-------|-------|
 | 96      | 0.387 | 0.408 |
