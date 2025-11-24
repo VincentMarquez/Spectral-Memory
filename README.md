@@ -1,7 +1,4 @@
-<h1 align="center">
-  Vincent Marquez Spectral Memory (VMSM)<br>
-  <sub>A General Spectral Memory Architecture for Sequence Models</sub>
-</h1>
+
 ---
 
 # Vincent Marquez Spectral Memory (VMSM)
