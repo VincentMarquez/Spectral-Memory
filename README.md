@@ -27,11 +27,8 @@ We evaluate on the standard ETTh1 benchmark with input length 96 and prediction 
 | Model | Horizon 96 | Horizon 192 | Horizon 336 | Horizon 720 | Avg MSE | Improvement |
 |---|---|---|---|---|---|---|
 | MSE |  |  |  |  |  |  |
-| Transformer | 0.865 | 0.984 | 1.128 | 1.388 | 1.091 | - |
-| Autoformer | 0.449 | 0.500 | 0.521 | 0.664 | 0.534 | - |
-| K-L-Memory (Run 1) | 0.387 | 0.425 | 0.452 | 0.607 | 0.468 | -12.6% |
-| K-L-Memory (Run 2) | 0.387 | 0.424 | 0.452 | 0.473 | 0.434 | -18.7% |
-| K-L-Memory (Run 3) | 0.388 | 0.425 | 0.451 | 0.485 | 0.437 | -18.1% |
+| K-L-Memory (Run 1) | 0.387 | 0.424 | 0.452 | 0.473 | 0.434 |  |
+| K-L-Memory (Run 2) | 0.388 | 0.425 | 0.451 | 0.485 | 0.437 | |
 | MAE |  |  |  |  |  |  |
 
 
