@@ -7,10 +7,7 @@ import math
 
 
 class PositionalEncoding(nn.Module):
-    """
-    Classic sinusoidal positional encoding (same as original Transformer).
-    Supports arbitrary offset for decoder/future positions.
-    """
+
     def __init__(self, d_model: int, max_len: int = 10000):
         super().__init__()
         position = torch.arange(max_len).unsqueeze(1)
@@ -95,11 +92,7 @@ class KLMemory(nn.Module):
 
 
 class Model(nn.Module):
-    """
-    K-L Memory Transformer — production-ready version (Nov 2025)
-    Proven to outperform Autoformer/FEDformer/PatchTST/DLinear etc. by 17–29% on ETTh1/ETTm1 with identical TSL benchmarks (10-epoch runs already decisive; 100-epoch runs reach ~33% gain on 720-step horizon).
-    Drop-in replacement for any model in Time-Series-Library.
-    """
+
     def __init__(self, configs):
         super().__init__()
         self.task_name = configs.task_name
@@ -118,9 +111,9 @@ class Model(nn.Module):
 
         self.memory = KLMemory(
             d_model=configs.d_model,
-            memory_depth=4096,      # increased from 4096 for very long training runs
+            memory_depth=4096,      
             n_components=16,
-            tau=96.0,               # optimal for hourly data (4× daily cycle)
+            tau=96.0,               
             memory_tokens=8,
             
         )
@@ -159,7 +152,7 @@ class Model(nn.Module):
 
         enc_out = h_out[self.memory.memory_tokens:]               # (L, B, d) — sequence representations
 
-        # --- Simple but highly effective decoder (repeat last label_len hidden states) ---
+        # --- Simple decoder (repeat last label_len hidden states) ---
         repeat_times = math.ceil(self.pred_len / self.label_len)
         dec_out = enc_out[-self.label_len:].repeat(repeat_times, 1, 1)[:self.pred_len]
 
