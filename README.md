@@ -205,6 +205,50 @@ tokens = self.component_mixer(patterns)  # Bottleneck: (K*d -> 64 -> M*d)
 
 ---
 
+⭐ Temporal Integrity and Memory Management
+
+Memory-based forecasting architectures require special care to avoid cross-phase contamination and ensure that evaluation faithfully reflects generalization. This implementation includes explicit safeguards to guarantee that KLMemory / VMSM behaves properly under the standard Time-Series-Library benchmarking protocol.
+
+1. Cross-Phase Memory Isolation
+
+The KLMemory state buffer is never shared across training, validation, or test phases.
+To enforce this:
+
+Memory is reset at the start of every training epoch
+
+Memory is reset immediately before validation
+
+Memory is reset immediately before test evaluation
+
+These resets are performed through the model’s reset_memory() method, which the experiment runner invokes automatically at each phase transition.
+Result: No spectral information from training can leak into validation or test predictions.
+
+2. Gradient Isolation of the KL Decomposition
+
+The Karhunen–Loève computation (detach_kl=True) is non-trainable by design:
+
+Eigendecomposition runs on detached hidden states
+
+Only the downstream MLP projection is optimized
+
+No gradients flow through the covariance matrix or eigenvectors
+
+This prevents the model from “bending” the spectral basis toward specific training examples and ensures that KLMemory learns distribution-level structure, not shortcut encodings of specific sequences.
+
+3. Temporal-Leakage-Free Benchmarking
+
+This implementation follows the official Time-Series-Library protocol:
+
+Training batches are shuffled (as done in PatchTST, iTransformer, TimesNet)
+
+Validation and test loaders remain unshuffled
+
+Covariance extraction is robust to batch ordering and does not access future horizon values
+
+The KLMemory mechanism compresses latent training dynamics, not raw future values or label information, and is therefore fully compliant with the TSL temporal evaluation standard.
+
+
+
 # 📘 Comparison to Related Work
 
 | Method          | Basis Type            | Learnable | Adaptive    | Notes                |
