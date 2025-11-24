@@ -95,12 +95,12 @@ done
 
 ### 🧩 Architecture Overview
 
-### 1\. Spectral Covariance Memory (Default / Production)
+### 1\. Spectral Covariance Memory (K-L Memory, V1,V2,V3)
 
 **Description:** This is the version used for all benchmark numbers. It uses a **low-rank bottleneck projection** to compress eigen-patterns efficiently, keeping the model lightweight (only \~0.7M parameters) and fast on both NVIDIA GPUs and Apple Silicon.
 
 ```python
-# Production Logic (Simplified)
+#  Logic (Simplified)
 H = F.normalize(self._history, dim=1)    # [T, d_model]
 K = torch.exp(-dist / tau)               # Time-kernel (Gaussian/Exp)
 L, V = torch.linalg.eigh(K)              # Eigen decomposition
