@@ -46,9 +46,6 @@ We evaluate on the standard ETTh1 benchmark with input length 96 and prediction 
 | 720     | 0.485 | 0.482 |
 | **Avg** | **0.437** | **0.442** |
 
-**Best average MSE = 0.434**  
-→ 18.7 % better than Autoformer  
-→ 60.2 % better than vanilla Transformer (averaged over the four horizons)
 
 More runs and additional datasets (Weather, Traffic, ECL, etc.) coming soon.
 
@@ -62,14 +59,15 @@ More runs and additional datasets (Weather, Traffic, ECL, etc.) coming soon.
 ### Prerequisites
 ```bash
 # Install dependencies
-pip install torch pandas numpy scikit-learn
+pip install torch, pandas, numpy, scikit-learn, Math
+Python3.13.3
 
 ## Hardware & Training
 
 - **Device**: Apple M4 Mac Mini  
 - **Memory**: 16 GB unified  
 - **Training**: CPU-only  
-- **Total time to SOTA**: 9 hours
+- **Total time to SOTA**: 9-15 hours
 
 # Download ETTh1 dataset
 wget https://github.com/zhouhaoyi/ETDataset/raw/main/ETT-small/ETTh1.csv -P ./dataset/
@@ -77,7 +75,7 @@ wget https://github.com/zhouhaoyi/ETDataset/raw/main/ETT-small/ETTh1.csv -P ./da
 
 ### Running Experiments
 
-For Apple Silicon (M1/M2/M3):
+For Apple Silicon (M1/M2/M3/M4):
 ```bash
 # Enable MPS fallback for compatibility
 export PYTORCH_ENABLE_MPS_FALLBACK=1
@@ -119,10 +117,10 @@ For CUDA GPUs:
 
 ### Architecture Configuration
 ```python
-# K-L-Memory Settings (KLMemoryGemini3_3_8.py)
+# K-L-Memory Settings (KLMemory.py)
 memory_depth=2048        # Deep history buffer
 n_components=16          # Number of Eigencomponents to extract
-memory_tokens=4          # Tokens injected into Transformer
+memory_tokens=8          # Tokens injected into Transformer
 d_model=512             # Hidden dimension
 
 # Training Settings
@@ -162,9 +160,7 @@ early_stopping_patience=3
 
 | Metric | Value |
 |--------|-------|
-| Training Time | ~340 seconds/epoch (M1 Mac CPU/MPS) |
-| Memory Overhead | ~5% vs baseline Transformer |
-| VRAM Usage | O(1) - constant regardless of sequence length |
+| Training Time | ~340-1200 seconds/epoch (M4 Mac CPU/MPS) |
 | Scaling | O(L) - linear with sequence length |
 
 ## 📚 Comparison with Related Work
@@ -209,7 +205,7 @@ If you use this code or build upon the K-L Memory methodology in your research, 
 ### Recommended Citation Format
 
 ```
-Marquez, Vincent. (2024). K-L Memory. GitHub repository: https://github.com/[yourusername]/K-L-Memory
+Marquez, Vincent. (2025). K-L Memory. GitHub repository: https://github.com/[VincentMarquez]/K-L-Memory
 ```
 
 Or in BibTeX format:
