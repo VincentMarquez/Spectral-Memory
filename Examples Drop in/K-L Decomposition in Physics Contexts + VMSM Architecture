@@ -1,0 +1,1049 @@
+
+# =============================================================
+# K-L Decomposition in Physics Contexts + VMSM Architecture
+# =============================================================
+# 
+# This module demonstrates Karhunen-Loève (K-L) decomposition applied
+# to problems in quantum mechanics, statistical physics, and dynamical
+# systems. The same spectral memory principles used in VMSM for sequence
+# modeling have deep roots in physics.
+#
+# STRUCTURE:
+#   Part I:   Classical K-L Infrastructure (NumPy) - Physics foundations
+#   Part II:  Physics Examples 1-5 - Demonstrating K-L applications
+#   Part III: VMSM Architecture (PyTorch) - THE NOVEL CONTRIBUTION
+#   Part IV:  Example 6 - Full VMSM pipeline with learnable projection
+#
+# KEY DISTINCTION:
+#   - Part I & II are CLASSICAL (Karhunen 1946, Loève 1948)
+#   - Part III & IV are VMSM's CONTRIBUTION: learnable projection
+#     that maps K-L components → task-specific memory tokens
+#
+# The pipeline:
+#   Historical Hidden States → Covariance Kernel → K-L Decomposition
+#   → Top Spectral Modes → LEARNABLE MLP → Memory Tokens → Reinjection
+#                          ^^^^^^^^^^^^
+#                          THIS IS NEW
+#
+# =============================================================
+"""
+
+import numpy as np
+from typing import Tuple, Optional, List
+from dataclasses import dataclass
+
+# PyTorch imports for VMSM (Part III)
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    print("PyTorch not available. Part III (VMSM) examples will be skipped.")
+
+
+# =============================================================
+# PART I: CLASSICAL K-L INFRASTRUCTURE (NumPy)
+# =============================================================
+# This section implements standard K-L decomposition using NumPy.
+# These techniques date back to Karhunen (1946) and Loève (1948).
+# =============================================================
+
+def time_covariance_kernel(
+    times: np.ndarray,
+    tau: float = 1.0,
+    kernel: str = "exp"
+) -> np.ndarray:
+    """
+    Construct temporal covariance kernel K(t_i, t_j).
+    
+    Physical interpretation:
+      - 'exp': Ornstein-Uhlenbeck process (thermal fluctuations)
+      - 'gauss': Squared-exponential (smooth quantum evolution)
+      - 'matern': Matérn-1/2 (rough stochastic processes)
+    
+    Args:
+        times: Array of observation times
+        tau: Correlation timescale (physical units)
+        kernel: Kernel type
+        
+    Returns:
+        K: Covariance matrix (T, T)
+    """
+    dt = np.abs(times[:, None] - times[None, :])
+    tau = max(float(tau), 1e-12)
+    
+    if kernel == "exp":
+        # Ornstein-Uhlenbeck: C(t) = exp(-|t|/τ)
+        K = np.exp(-dt / tau)
+    elif kernel == "gauss":
+        # Squared exponential: C(t) = exp(-t²/2τ²)
+        K = np.exp(-(dt ** 2) / (2 * tau ** 2))
+    elif kernel == "matern":
+        # Matérn-1/2: C(t) = (1 + |t|/τ) exp(-|t|/τ)
+        r = dt / tau
+        K = np.exp(-r) * (1.0 + r)
+    else:
+        raise ValueError(f"Unknown kernel: {kernel}")
+    
+    # Ensure symmetry and positive definiteness
+    K = 0.5 * (K + K.T)
+    K += 1e-10 * np.eye(len(times))
+    return K
+
+
+def kl_decomposition(
+    K: np.ndarray,
+    n_components: int = 8
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Perform K-L decomposition on covariance kernel.
+    
+    The K-L theorem states that any stochastic process X(t) with
+    covariance C(s,t) can be expanded as:
+    
+        X(t) = Σ_k √λ_k ξ_k φ_k(t)
+    
+    where λ_k, φ_k are eigenvalues/eigenfunctions of C, and ξ_k ~ N(0,1).
+    
+    Args:
+        K: Covariance matrix (T, T)
+        n_components: Number of principal modes to retain
+        
+    Returns:
+        eigenvalues: Top-k eigenvalues (k,)
+        eigenvectors: Corresponding eigenfunctions (T, k)
+    """
+    T = K.shape[0]
+    n_components = min(n_components, T)
+    
+    # Eigendecomposition (ascending order)
+    evals, evecs = np.linalg.eigh(K)
+    
+    # Select top-k by magnitude
+    idx = np.argsort(evals)[::-1][:n_components]
+    lams = np.maximum(evals[idx], 0.0)
+    phi = evecs[:, idx]
+    
+    # Normalize eigenvectors
+    phi = phi / (np.linalg.norm(phi, axis=0, keepdims=True) + 1e-12)
+    
+    return lams, phi
+
+
+def project_onto_kl_basis(
+    data: np.ndarray,
+    phi: np.ndarray,
+    lams: np.ndarray,
+    weighting: str = "sqrt_lambda"
+) -> np.ndarray:
+    """
+    Project data onto K-L eigenbasis.
+    
+    Args:
+        data: Observations (T, D) or (T,)
+        phi: Eigenfunctions (T, k)
+        lams: Eigenvalues (k,)
+        weighting: 'sqrt_lambda', 'lambda', or 'none'
+        
+    Returns:
+        coefficients: K-L expansion coefficients (k, D) or (k,)
+    """
+    if data.ndim == 1:
+        data = data[:, None]
+    
+    # Project: c_k = φ_k^T · data
+    coeffs = phi.T @ data  # (k, D)
+    
+    # Apply eigenvalue weighting (standard in K-L theory)
+    if weighting == "sqrt_lambda":
+        W = np.sqrt(lams + 1e-12)[:, None]
+    elif weighting == "lambda":
+        W = lams[:, None]
+    else:
+        W = np.ones_like(lams)[:, None]
+    
+    return W * coeffs
+
+
+def reconstruct_from_kl(
+    coeffs: np.ndarray,
+    phi: np.ndarray,
+    lams: np.ndarray,
+    weighting: str = "sqrt_lambda"
+) -> np.ndarray:
+    """
+    Reconstruct signal from K-L coefficients.
+    
+    Args:
+        coeffs: K-L coefficients (k, D)
+        phi: Eigenfunctions (T, k)
+        lams: Eigenvalues (k,)
+        weighting: Must match projection weighting
+        
+    Returns:
+        reconstructed: (T, D)
+    """
+    if weighting == "sqrt_lambda":
+        W = np.sqrt(lams + 1e-12)[:, None]
+    elif weighting == "lambda":
+        W = lams[:, None]
+    else:
+        W = np.ones_like(lams)[:, None]
+    
+    # Undo weighting and reconstruct
+    return phi @ (coeffs / (W + 1e-12))
+
+
+# =============================================================
+# PART II: PHYSICS EXAMPLES (Classical K-L Applications)
+# =============================================================
+
+def example_quantum_denoising():
+    """
+    EXAMPLE 1: Denoise a noisy quantum state trajectory using K-L decomposition.
+    
+    Physical setup:
+      - Pure state |ψ(t)⟩ evolving under Hamiltonian H
+      - Measurements add Gaussian noise to amplitudes
+      - K-L extracts the coherent evolution from noise
+    
+    This mirrors how VMSM extracts persistent patterns from noisy
+    hidden-state histories.
+    """
+    print("\n" + "="*60)
+    print("EXAMPLE 1: Quantum State Denoising (Classical K-L)")
+    print("="*60)
+    
+    # Simulate 2-level system (qubit) Rabi oscillation
+    T = 100
+    times = np.linspace(0, 4 * np.pi, T)
+    omega = 1.0  # Rabi frequency
+    
+    # True pure state: |ψ(t)⟩ = cos(ωt/2)|0⟩ + sin(ωt/2)|1⟩
+    psi_true = np.stack([
+        np.cos(omega * times / 2),
+        np.sin(omega * times / 2)
+    ], axis=1)  # (T, 2)
+    
+    # Add measurement noise
+    noise_level = 0.3
+    psi_noisy = psi_true + noise_level * np.random.randn(T, 2)
+    
+    # K-L denoising
+    tau = 2.0  # Correlation time ~ Rabi period
+    K = time_covariance_kernel(times, tau=tau, kernel="gauss")
+    lams, phi = kl_decomposition(K, n_components=4)
+    
+    # Project noisy data onto K-L basis
+    coeffs = project_onto_kl_basis(psi_noisy, phi, lams)
+    
+    # Reconstruct (low-rank approximation removes noise)
+    psi_denoised = reconstruct_from_kl(coeffs, phi, lams)
+    
+    # Compute errors
+    noisy_error = np.mean((psi_noisy - psi_true) ** 2)
+    denoised_error = np.mean((psi_denoised - psi_true) ** 2)
+    
+    print(f"  Noise level: {noise_level}")
+    print(f"  MSE (noisy):    {noisy_error:.4f}")
+    print(f"  MSE (denoised): {denoised_error:.4f}")
+    print(f"  Improvement:    {noisy_error/denoised_error:.1f}x")
+    print(f"  Top eigenvalues: {lams[:4].round(3)}")
+    
+    return psi_true, psi_noisy, psi_denoised, lams
+
+
+def example_ising_correlations():
+    """
+    EXAMPLE 2: Extract dominant spin fluctuation modes from 1D Ising model.
+    
+    Physical setup:
+      - 1D Ising chain with N spins at temperature T
+      - Spin-spin correlations: C_ij = ⟨s_i s_j⟩ - ⟨s_i⟩⟨s_j⟩
+      - K-L modes reveal ferromagnetic vs paramagnetic structure
+    
+    Near T_c, the largest eigenvalue diverges (critical slowing down).
+    """
+    print("\n" + "="*60)
+    print("EXAMPLE 2: Ising Model Correlation Modes (Classical K-L)")
+    print("="*60)
+    
+    N = 32  # Chain length
+    J = 1.0  # Coupling
+    
+    def ising_correlation_matrix(T_temp, N, J):
+        """Exact 1D Ising correlations (no phase transition in 1D)."""
+        beta = 1.0 / T_temp
+        tanh_bJ = np.tanh(beta * J)
+        
+        # C_ij = tanh(βJ)^|i-j| for 1D Ising
+        i, j = np.meshgrid(np.arange(N), np.arange(N))
+        C = tanh_bJ ** np.abs(i - j)
+        return C
+    
+    # Compare high-T (disordered) vs low-T (ordered)
+    for T_temp, label in [(0.5, "Low-T (ordered)"), (2.0, "High-T (disordered)")]:
+        C = ising_correlation_matrix(T_temp, N, J)
+        lams, phi = kl_decomposition(C, n_components=8)
+        
+        print(f"\n  {label} (T={T_temp}):")
+        print(f"    Correlation length: ξ ≈ {-1/np.log(np.tanh(1/T_temp)+1e-10):.2f}")
+        print(f"    Top eigenvalues: {lams[:4].round(3)}")
+        print(f"    Dominant mode participation ratio: {(lams[0]/lams.sum()*100):.1f}%")
+    
+    return C, lams, phi
+
+
+def example_pod_trajectory():
+    """
+    EXAMPLE 3: Proper Orthogonal Decomposition of chaotic trajectory.
+    
+    Physical setup:
+      - Lorenz attractor (chaotic ODE system)
+      - K-L/POD extracts coherent large-scale structures
+      - Low-rank reconstruction captures attractor skeleton
+    
+    POD is the continuous analog of PCA; K-L provides the optimal
+    basis for representing stochastic/chaotic trajectories.
+    """
+    print("\n" + "="*60)
+    print("EXAMPLE 3: Proper Orthogonal Decomposition (Classical K-L)")
+    print("="*60)
+    
+    # Lorenz system parameters
+    sigma, rho, beta = 10.0, 28.0, 8.0 / 3.0
+    
+    def lorenz_rhs(state):
+        x, y, z = state
+        return np.array([
+            sigma * (y - x),
+            x * (rho - z) - y,
+            x * y - beta * z
+        ])
+    
+    # Integrate with RK4
+    dt = 0.01
+    T = 2000
+    state = np.array([1.0, 1.0, 1.0])
+    trajectory = [state]
+    
+    for _ in range(T - 1):
+        k1 = lorenz_rhs(state)
+        k2 = lorenz_rhs(state + 0.5 * dt * k1)
+        k3 = lorenz_rhs(state + 0.5 * dt * k2)
+        k4 = lorenz_rhs(state + dt * k3)
+        state = state + (dt / 6) * (k1 + 2*k2 + 2*k3 + k4)
+        trajectory.append(state)
+    
+    trajectory = np.array(trajectory)  # (T, 3)
+    times = np.arange(T) * dt
+    
+    # K-L decomposition with physical timescale
+    tau = 1.0  # Lyapunov timescale ~ 1
+    K = time_covariance_kernel(times, tau=tau, kernel="exp")
+    lams, phi = kl_decomposition(K, n_components=16)
+    
+    # Project and reconstruct
+    coeffs = project_onto_kl_basis(trajectory, phi, lams, weighting="sqrt_lambda")
+    
+    # Variance explained by top modes
+    total_var = np.var(trajectory)
+    cumulative = np.cumsum(lams) / lams.sum()
+    
+    print(f"  Trajectory length: {T} steps")
+    print(f"  Eigenvalue spectrum decay:")
+    for k in [1, 2, 4, 8, 16]:
+        print(f"    Top {k:2d} modes: {cumulative[k-1]*100:.1f}% variance")
+    
+    print(f"\n  Interpretation:")
+    print(f"    Mode 1: Mean flow around attractor wings")
+    print(f"    Mode 2-3: Wing-to-wing transitions")
+    print(f"    Higher modes: Chaotic fine structure")
+    
+    return trajectory, lams, phi
+
+
+def example_phase_transition_dee():
+    """
+    EXAMPLE 4: Detect quantum phase transition using Derivative of Entanglement Entropy.
+    
+    Physical setup:
+      - Transverse-field Ising model: H = -J Σ σ^z_i σ^z_{i+1} - g Σ σ^x_i
+      - At g_c ≈ 1 (in units of J), system undergoes QPT
+      - DEE = dS/dg peaks at criticality
+    
+    K-L enters through the reduced density matrix eigenspectrum,
+    which determines entanglement entropy S = -Tr(ρ ln ρ).
+    """
+    print("\n" + "="*60)
+    print("EXAMPLE 4: Phase Transition Detection (Classical K-L)")
+    print("="*60)
+    
+    def mock_entanglement_entropy(g: float, L: int = 16) -> float:
+        """Simplified model of S(g) for transverse-field Ising."""
+        g_c = 1.0
+        S_ordered = 0.2
+        S_disordered = 0.3
+        S_critical = (1/6) * np.log(L)  # c=1/2 for Ising CFT
+        
+        width = 0.3
+        weight = np.exp(-((g - g_c) / width) ** 2)
+        S_base = S_ordered + (S_disordered - S_ordered) / (1 + np.exp(-(g - g_c) / 0.2))
+        
+        return S_base + weight * (S_critical - S_base) * 0.5
+    
+    # Scan coupling parameter
+    g_values = np.linspace(0.2, 1.8, 81)
+    L = 32
+    
+    S_values = np.array([mock_entanglement_entropy(g, L) for g in g_values])
+    
+    # Compute DEE (derivative of entropy)
+    dg = g_values[1] - g_values[0]
+    DEE = np.gradient(S_values, dg)
+    
+    # Find critical point (peak of |DEE|)
+    i_crit = np.argmax(np.abs(DEE))
+    g_c_estimated = g_values[i_crit]
+    
+    print(f"  System size: L = {L}")
+    print(f"  True critical point: g_c = 1.0")
+    print(f"  DEE estimate: g_c ≈ {g_c_estimated:.3f}")
+    print(f"  Peak |DEE|: {np.abs(DEE[i_crit]):.4f}")
+    
+    print(f"\n  K-L Connection:")
+    print(f"    S = -Σ λ_k ln(λ_k) where λ_k are K-L eigenvalues")
+    print(f"    At criticality, spectrum becomes scale-free (power-law)")
+    print(f"    This causes the logarithmic divergence in S")
+    
+    return g_values, S_values, DEE, g_c_estimated
+
+
+def example_gp_kl_basis():
+    """
+    EXAMPLE 5: Gaussian Process regression using K-L eigenfunctions as basis.
+    
+    Physical setup:
+      - GP prior with covariance K(x, x') models uncertainty
+      - K-L eigenfunctions provide optimal truncated basis
+      - Posterior mean is projection onto observed data
+    
+    This connects VMSM's spectral memory to Bayesian inference:
+    K-L modes are the "natural coordinates" for the GP.
+    """
+    print("\n" + "="*60)
+    print("EXAMPLE 5: Gaussian Process with K-L Basis (Classical)")
+    print("="*60)
+    
+    # True function (unknown to GP)
+    def f_true(x):
+        return np.sin(2 * x) + 0.5 * np.cos(5 * x)
+    
+    # Observations (sparse, noisy)
+    np.random.seed(42)
+    n_obs = 8
+    x_obs = np.sort(np.random.uniform(0, 2 * np.pi, n_obs))
+    y_obs = f_true(x_obs) + 0.1 * np.random.randn(n_obs)
+    
+    # Prediction grid
+    n_pred = 100
+    x_pred = np.linspace(0, 2 * np.pi, n_pred)
+    
+    # Build K-L basis from prior covariance
+    tau = 1.0
+    K_pred = time_covariance_kernel(x_pred, tau=tau, kernel="gauss")
+    lams, phi = kl_decomposition(K_pred, n_components=12)
+    
+    # Interpolate eigenfunctions to observation points
+    phi_obs = np.array([
+        np.interp(x_obs, x_pred, phi[:, k])
+        for k in range(phi.shape[1])
+    ]).T  # (n_obs, k)
+    
+    # Solve for K-L coefficients that fit observations
+    ridge = 0.01
+    A = phi_obs.T @ phi_obs + ridge * np.eye(phi_obs.shape[1])
+    b = phi_obs.T @ y_obs
+    coeffs = np.linalg.solve(A, b)
+    
+    # Predict using K-L expansion
+    y_pred = phi @ coeffs
+    
+    # Variance explained by truncation
+    var_explained = lams[:len(coeffs)].sum() / lams.sum()
+    
+    print(f"  Observations: {n_obs} noisy points")
+    print(f"  K-L components: {len(coeffs)}")
+    print(f"  Variance explained: {var_explained*100:.1f}%")
+    
+    # Compare to true function
+    mse = np.mean((y_pred - f_true(x_pred)) ** 2)
+    print(f"  Prediction MSE: {mse:.4f}")
+    
+    print(f"\n  Physical interpretation:")
+    print(f"    K-L modes = Fourier-like basis adapted to correlation structure")
+    print(f"    Low modes = smooth trends (long correlation)")
+    print(f"    High modes = fine structure (short correlation)")
+    
+    return x_pred, y_pred, x_obs, y_obs, f_true(x_pred)
+
+
+# =============================================================
+# PART II.5: Classical PhysicsKLMemory (No learnable components)
+# =============================================================
+
+@dataclass
+class PhysicsKLMemory:
+    """
+    Classical K-L memory layer for physical observables.
+    
+    This is the NON-LEARNABLE version - pure signal processing.
+    See VSMMemory (Part III) for the learnable VMSM architecture.
+    
+    Designed for tracking time-evolving physical quantities:
+      - Quantum expectation values
+      - Order parameters
+      - Correlation functions
+    """
+    history_depth: int = 256
+    n_components: int = 16
+    tau: Optional[float] = None
+    kernel: str = "exp"
+    weighting: str = "sqrt_lambda"
+    auto_tune: bool = True
+    
+    def __post_init__(self):
+        self._history: Optional[np.ndarray] = None
+        self._times: Optional[np.ndarray] = None
+        self._phi: Optional[np.ndarray] = None
+        self._lams: Optional[np.ndarray] = None
+        self._dt: float = 1.0
+    
+    def reset(self):
+        """Clear history buffer."""
+        self._history = None
+        self._times = None
+        self._phi = None
+        self._lams = None
+    
+    def append(self, observable: np.ndarray, dt: float = 1.0):
+        """Append new measurement to history."""
+        self._dt = dt
+        obs = np.atleast_1d(observable).astype(np.float64)
+        
+        if self._history is None:
+            self._history = obs.reshape(1, -1)
+            self._times = np.array([0.0])
+        else:
+            self._history = np.vstack([self._history, obs])
+            self._times = np.append(self._times, self._times[-1] + dt)
+        
+        # FIFO eviction
+        if len(self._history) > self.history_depth:
+            self._history = self._history[-self.history_depth:]
+            self._times = self._times[-self.history_depth:]
+            self._phi = None
+    
+    def _estimate_tau(self) -> float:
+        """Estimate correlation time from autocorrelation."""
+        if self._history is None or len(self._history) < 4:
+            return self._dt * 10
+        
+        x = self._history[:, 0] - self._history[:, 0].mean()
+        n = len(x)
+        
+        f = np.fft.rfft(x, n=2*n)
+        ac = np.fft.irfft(f * f.conj())[:n]
+        ac = ac / (ac[0] + 1e-12)
+        
+        idx = np.argmax(ac < 1/np.e)
+        if idx == 0:
+            idx = max(1, n // 10)
+        
+        return float(idx * self._dt)
+    
+    def _build_basis(self):
+        """Construct K-L eigenbasis."""
+        T = len(self._history)
+        
+        tau = self.tau
+        if self.auto_tune or tau is None:
+            tau = self._estimate_tau()
+            tau = np.clip(tau, self._dt * 3, self._dt * 50)
+        
+        K = time_covariance_kernel(self._times, tau=tau, kernel=self.kernel)
+        self._lams, self._phi = kl_decomposition(K, n_components=self.n_components)
+    
+    def compute(self, observable: Optional[np.ndarray] = None) -> np.ndarray:
+        """Compute K-L filtered estimate of current state."""
+        if observable is not None:
+            self.append(observable)
+        
+        if self._history is None:
+            raise RuntimeError("No history available")
+        
+        T = len(self._history)
+        if T < self.n_components:
+            return self._history[-1].copy()
+        
+        if self._phi is None or self._phi.shape[0] != T:
+            self._build_basis()
+        
+        coeffs = project_onto_kl_basis(
+            self._history, self._phi, self._lams, self.weighting
+        )
+        recon = reconstruct_from_kl(
+            coeffs, self._phi, self._lams, self.weighting
+        )
+        
+        return recon[-1].copy()
+    
+    def get_spectrum(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Return current eigenvalue spectrum and eigenfunctions."""
+        if self._lams is None:
+            self._build_basis()
+        return self._lams.copy(), self._phi.copy()
+
+
+# =============================================================
+# PART III: VMSM ARCHITECTURE (PyTorch) - THE NOVEL CONTRIBUTION
+# =============================================================
+# This section implements the LEARNABLE components that make VMSM
+# different from classical K-L decomposition.
+#
+# Key innovation: The MLP projection f_θ that maps K-L components
+# to task-specific memory tokens. This is trained end-to-end.
+#
+# Pipeline:
+#   H (history) → K-L decomposition → [k spectral modes]
+#                                            ↓
+#                              LEARNABLE MLP f_θ (THIS IS NEW)
+#                                            ↓
+#                                   [M memory tokens]
+#                                            ↓
+#                              Prepend to attention context
+# =============================================================
+
+if TORCH_AVAILABLE:
+    
+    def torch_time_kernel(times: torch.Tensor, tau: float = 1.0) -> torch.Tensor:
+        """PyTorch version of temporal covariance kernel."""
+        dt = (times[:, None] - times[None, :]).abs()
+        tau = max(float(tau), 1e-12)
+        K = torch.exp(-dt / tau)
+        K = 0.5 * (K + K.T)
+        return K
+    
+    
+    class VSMMemory(nn.Module):
+        """
+        Vincent-Marquez Spectral Memory (VMSM) Module.
+        
+        This is the COMPLETE VMSM architecture with learnable projection.
+        
+        Architecture:
+            1. History buffer stores T hidden states
+            2. K-L decomposition extracts top-k spectral modes
+            3. LEARNABLE MLP maps (k × d) → (M × d) memory tokens
+            4. Memory tokens are prepended to attention context
+        
+        The learnable projection (step 3) is what makes VMSM novel:
+        - Classical K-L is task-agnostic (just extracts dominant modes)
+        - The MLP learns to weight/combine modes for the specific task
+        - Gradients flow from task loss through attention to the MLP
+        
+        Args:
+            d_model: Hidden dimension
+            history_depth: Maximum history length (T)
+            n_components: Number of K-L modes to extract (k)
+            memory_tokens: Number of output memory tokens (M)
+            tau: Correlation timescale for kernel
+            bottleneck_dim: Hidden dimension in MLP (compression)
+        """
+        
+        def __init__(
+            self,
+            d_model: int = 512,
+            history_depth: int = 2048,
+            n_components: int = 16,
+            memory_tokens: int = 8,
+            tau: float = 64.0,
+            bottleneck_dim: Optional[int] = None
+        ):
+            super().__init__()
+            
+            self.d_model = d_model
+            self.history_depth = history_depth
+            self.n_components = n_components
+            self.memory_tokens = memory_tokens
+            self.tau = tau
+            
+            # ============================================================
+            # THE LEARNABLE PROJECTION - THIS IS VMSM'S CONTRIBUTION
+            # ============================================================
+            # Input: K-L components flattened (n_components × d_model)
+            # Output: Memory tokens flattened (memory_tokens × d_model)
+            #
+            # This MLP learns to:
+            #   - Amplify task-relevant spectral modes
+            #   - Suppress irrelevant/noisy modes  
+            #   - Create attention-compatible representations
+            # ============================================================
+            
+            input_dim = n_components * d_model
+            output_dim = memory_tokens * d_model
+            
+            if bottleneck_dim is None:
+                bottleneck_dim = min(input_dim // 2, 256)
+            
+            # Two-layer MLP with bottleneck (low-rank projection)
+            self.projection = nn.Sequential(
+                nn.Linear(input_dim, bottleneck_dim),
+                nn.GELU(),
+                nn.Dropout(0.1),
+                nn.Linear(bottleneck_dim, output_dim)
+            )
+            
+            # Buffers for history tracking
+            self.register_buffer("_history", torch.zeros(0, d_model))
+            self.register_buffer("_times", torch.zeros(0))
+            
+            # Cache for eigendecomposition
+            self._cached_phi: Optional[torch.Tensor] = None
+            self._cached_lams: Optional[torch.Tensor] = None
+            self._cached_T: int = 0
+        
+        def reset(self):
+            """Clear history buffer."""
+            device = self._history.device
+            self._history = torch.zeros(0, self.d_model, device=device)
+            self._times = torch.zeros(0, device=device)
+            self._cached_phi = None
+            self._cached_lams = None
+            self._cached_T = 0
+        
+        def append(self, hidden_states: torch.Tensor):
+            """
+            Append new hidden states to history.
+            
+            Args:
+                hidden_states: (B, L, d_model) or (L, d_model)
+            """
+            if hidden_states.dim() == 3:
+                # Average over batch for memory
+                h = hidden_states.mean(dim=0).detach()
+            else:
+                h = hidden_states.detach()
+            
+            # Append to history
+            T_old = self._history.shape[0]
+            self._history = torch.cat([self._history, h], dim=0)
+            new_times = torch.arange(T_old, T_old + h.shape[0], 
+                                     device=h.device, dtype=torch.float32)
+            self._times = torch.cat([self._times, new_times])
+            
+            # FIFO eviction
+            if self._history.shape[0] > self.history_depth:
+                excess = self._history.shape[0] - self.history_depth
+                self._history = self._history[excess:]
+                self._times = self._times[excess:]
+                self._cached_phi = None  # Invalidate cache
+        
+        def _kl_decompose(self) -> Tuple[torch.Tensor, torch.Tensor]:
+            """
+            Perform K-L decomposition on history.
+            
+            Returns:
+                lams: Eigenvalues (k,)
+                components: Spectral components (k, d_model)
+            """
+            T = self._history.shape[0]
+            
+            # Check cache
+            if (self._cached_phi is not None and 
+                self._cached_T == T and
+                self._cached_lams is not None):
+                phi, lams = self._cached_phi, self._cached_lams
+            else:
+                # Build temporal covariance kernel
+                K = torch_time_kernel(self._times, tau=self.tau)
+                K = K + 1e-6 * torch.eye(T, device=K.device)
+                
+                # Eigendecomposition (use float64 for stability)
+                K_64 = K.to(torch.float64)
+                evals, evecs = torch.linalg.eigh(K_64)
+                
+                # Select top-k modes
+                idx = torch.argsort(evals, descending=True)[:self.n_components]
+                lams = torch.clamp(evals[idx], min=0).to(K.dtype)
+                phi = evecs[:, idx].to(K.dtype)
+                
+                # Normalize
+                phi = phi / (phi.norm(dim=0, keepdim=True) + 1e-12)
+                
+                # Cache
+                self._cached_phi = phi
+                self._cached_lams = lams
+                self._cached_T = T
+            
+            # Project history onto eigenbasis: (k, T) @ (T, d) = (k, d)
+            components = phi.T @ self._history
+            
+            # Weight by sqrt(eigenvalue) - standard K-L weighting
+            weights = torch.sqrt(lams + 1e-12).unsqueeze(1)
+            components = weights * components
+            
+            return lams, components
+        
+        def forward(self, batch_size: int = 1) -> torch.Tensor:
+            """
+            Generate memory tokens from spectral history.
+            
+            This is where the LEARNABLE PROJECTION happens:
+                K-L components → MLP → Memory tokens
+            
+            Args:
+                batch_size: Batch size for output expansion
+                
+            Returns:
+                memory_tokens: (M, B, d_model) ready for attention
+            """
+            T = self._history.shape[0]
+            device = self._history.device
+            
+            # Not enough history - return zeros
+            if T < self.n_components:
+                return torch.zeros(self.memory_tokens, batch_size, self.d_model,
+                                   device=device)
+            
+            # Step 1: K-L decomposition (classical - NOT learnable)
+            lams, components = self._kl_decompose()  # (k, d_model)
+            
+            # Step 2: Flatten for MLP input
+            flat = components.reshape(-1)  # (k * d_model,)
+            
+            # ============================================================
+            # Step 3: LEARNABLE PROJECTION - THE VMSM CONTRIBUTION
+            # ============================================================
+            # This MLP is trained end-to-end with the task loss.
+            # It learns which spectral modes matter for the task.
+            # ============================================================
+            tokens_flat = self.projection(flat)  # (M * d_model,)
+            
+            # Step 4: Reshape to memory tokens
+            tokens = tokens_flat.reshape(self.memory_tokens, self.d_model)
+            
+            # Expand for batch
+            tokens = tokens.unsqueeze(1).expand(-1, batch_size, -1)
+            
+            return tokens
+        
+        def get_spectrum(self) -> Tuple[torch.Tensor, torch.Tensor]:
+            """Return current eigenvalue spectrum for analysis."""
+            if self._history.shape[0] < self.n_components:
+                return torch.zeros(self.n_components), torch.zeros(self.n_components, self.d_model)
+            lams, components = self._kl_decompose()
+            return lams, components
+
+
+    # =========================================================
+    # EXAMPLE 6: Full VMSM Pipeline Demo
+    # =========================================================
+    
+    def example_vmsm_pipeline():
+        """
+        EXAMPLE 6: Full VMSM Pipeline with Learnable Projection.
+        
+        This demonstrates the COMPLETE VMSM architecture:
+          1. Generate synthetic hidden states (simulating encoder output)
+          2. Feed through K-L decomposition  
+          3. Apply LEARNABLE MLP projection
+          4. Get memory tokens ready for attention
+        
+        The key insight: the MLP projection IS the novel contribution.
+        Everything before it is classical K-L (1946-1948).
+        """
+        print("\n" + "="*60)
+        print("EXAMPLE 6: Full VMSM Pipeline (LEARNABLE)")
+        print("="*60)
+        print("  This is the NOVEL contribution - learnable projection")
+        print("="*60)
+        
+        # Configuration
+        d_model = 128
+        seq_len = 64
+        n_components = 8
+        memory_tokens = 4
+        history_depth = 256
+        
+        # Create VMSM module
+        vmsm = VSMMemory(
+            d_model=d_model,
+            history_depth=history_depth,
+            n_components=n_components,
+            memory_tokens=memory_tokens,
+            tau=32.0,
+            bottleneck_dim=64
+        )
+        
+        # Count parameters
+        total_params = sum(p.numel() for p in vmsm.parameters())
+        trainable_params = sum(p.numel() for p in vmsm.parameters() if p.requires_grad)
+        
+        print(f"\n  VMSM Configuration:")
+        print(f"    d_model:        {d_model}")
+        print(f"    history_depth:  {history_depth}")
+        print(f"    n_components:   {n_components} (K-L modes)")
+        print(f"    memory_tokens:  {memory_tokens} (output)")
+        print(f"    Total params:   {total_params:,}")
+        print(f"    Trainable:      {trainable_params:,} (the MLP)")
+        
+        # Simulate encoder hidden states (multiple chunks)
+        print(f"\n  Simulating sequence processing...")
+        n_chunks = 8
+        
+        for chunk_idx in range(n_chunks):
+            # Synthetic hidden states with temporal structure
+            t = torch.linspace(chunk_idx * seq_len, (chunk_idx + 1) * seq_len, seq_len)
+            
+            # Signal: slow oscillation + fast oscillation + noise
+            signal = (torch.sin(t * 0.1) + 0.3 * torch.sin(t * 0.5) + 
+                     0.2 * torch.randn(seq_len))
+            
+            # Expand to d_model dimensions
+            hidden_states = signal.unsqueeze(1) * torch.randn(1, d_model) * 0.1
+            hidden_states = hidden_states + torch.randn(seq_len, d_model) * 0.05
+            
+            # Append to VMSM history
+            vmsm.append(hidden_states)
+        
+        print(f"    Processed {n_chunks} chunks × {seq_len} steps = {n_chunks * seq_len} total")
+        print(f"    History buffer: {vmsm._history.shape[0]} states")
+        
+        # Generate memory tokens
+        print(f"\n  Generating memory tokens...")
+        batch_size = 2
+        memory_tokens_out = vmsm(batch_size=batch_size)
+        
+        print(f"    Output shape: {tuple(memory_tokens_out.shape)}")
+        print(f"    (M={memory_tokens}, B={batch_size}, d={d_model})")
+        
+        # Analyze spectral content
+        lams, components = vmsm.get_spectrum()
+        var_explained = (lams / lams.sum() * 100).numpy()
+        
+        print(f"\n  K-L Spectral Analysis:")
+        print(f"    Eigenvalue spectrum: {lams[:4].numpy().round(3)}")
+        print(f"    Variance explained by top modes:")
+        for i in range(min(4, len(var_explained))):
+            print(f"      Mode {i+1}: {var_explained[i]:.1f}%")
+        print(f"    Cumulative (top 4): {var_explained[:4].sum():.1f}%")
+        
+        # Show the learnable projection
+        print(f"\n  Learnable Projection (THE NOVEL PART):")
+        print(f"    Input:  {n_components} × {d_model} = {n_components * d_model} (K-L modes)")
+        print(f"    Hidden: 64 (bottleneck)")
+        print(f"    Output: {memory_tokens} × {d_model} = {memory_tokens * d_model} (memory tokens)")
+        print(f"    This MLP is trained end-to-end with task loss!")
+        
+        # Demonstrate gradient flow
+        print(f"\n  Gradient Flow Test:")
+        memory_tokens_out.sum().backward()
+        grad_norm = vmsm.projection[0].weight.grad.norm().item()
+        print(f"    Gradient flows to projection layer: ✓")
+        print(f"    Projection layer grad norm: {grad_norm:.4f}")
+        
+        print(f"\n  Summary:")
+        print(f"    Classical K-L: Extracts {n_components} spectral modes (task-agnostic)")
+        print(f"    VMSM MLP:      Maps to {memory_tokens} tokens (task-specific)")
+        print(f"    The MLP learns WHICH modes matter for YOUR task!")
+        
+        return vmsm, memory_tokens_out, lams
+
+
+# =============================================================
+# PART IV: RUNNABLE DEMO
+# =============================================================
+
+if __name__ == "__main__":
+    print("="*60)
+    print("K-L DECOMPOSITION: PHYSICS TO VMSM")
+    print("="*60)
+    print("\nThis demo shows the progression from classical K-L")
+    print("decomposition (1946-1948) to the VMSM architecture.")
+    print("\nPart I-II:  Classical K-L (NumPy) - THE FOUNDATION")
+    print("Part III:   VMSM (PyTorch) - THE NOVEL CONTRIBUTION")
+    
+    # Run classical examples
+    print("\n" + "="*60)
+    print("PART I-II: CLASSICAL K-L EXAMPLES")
+    print("="*60)
+    
+    example_quantum_denoising()
+    example_ising_correlations()
+    example_pod_trajectory()
+    example_phase_transition_dee()
+    example_gp_kl_basis()
+    
+    # Demo of classical PhysicsKLMemory
+    print("\n" + "="*60)
+    print("CLASSICAL PhysicsKLMemory Demo (No learnable components)")
+    print("="*60)
+    
+    mem = PhysicsKLMemory(history_depth=128, n_components=8, kernel="gauss")
+    
+    times = np.linspace(0, 10, 200)
+    true_signal = np.sin(times) + 0.3 * np.sin(3 * times)
+    noisy_signal = true_signal + 0.4 * np.random.randn(len(times))
+    
+    filtered = []
+    for i, (t, y) in enumerate(zip(times, noisy_signal)):
+        if i == 0:
+            mem.append(np.array([y]), dt=times[1]-times[0])
+            filtered.append(y)
+        else:
+            filtered.append(mem.compute(np.array([y]))[0])
+    
+    filtered = np.array(filtered)
+    
+    print(f"  Noisy MSE:    {np.mean((noisy_signal - true_signal)**2):.4f}")
+    print(f"  Filtered MSE: {np.mean((filtered - true_signal)**2):.4f}")
+    
+    lams, _ = mem.get_spectrum()
+    print(f"  Top eigenvalues: {lams[:4].round(4)}")
+    
+    # Run VMSM example (PyTorch)
+    if TORCH_AVAILABLE:
+        print("\n" + "="*60)
+        print("PART III: VMSM WITH LEARNABLE PROJECTION")
+        print("="*60)
+        
+        example_vmsm_pipeline()
+    else:
+        print("\n" + "="*60)
+        print("PART III: SKIPPED (PyTorch not available)")
+        print("="*60)
+    
+    print("\n" + "="*60)
+    print("SUMMARY")
+    print("="*60)
+    print("""
+    Classical K-L (Examples 1-5):
+      - Extracts dominant spectral modes from data
+      - Task-AGNOSTIC: same decomposition regardless of use case
+      - Pure signal processing, no learning
+    
+    VMSM (Example 6):
+      - Uses K-L decomposition as preprocessing
+      - Adds LEARNABLE MLP projection
+      - Task-SPECIFIC: MLP learns which modes matter
+      - End-to-end trainable with task loss
+    
+    The MLP projection IS the contribution.
+    Everything else is foundation.
+    """)
+    print("="*60)
+    print("All examples completed successfully.")
+    print("="*60)
