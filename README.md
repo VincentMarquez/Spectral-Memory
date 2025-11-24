@@ -194,6 +194,53 @@ memory_tokens = self.component_mixer(patterns)  # Learnable projection
 
 
 
+
+🔄 K-L Memory v4 (Updated Implementation)
+
+K-L Memory v2 is an improved version of the original module with better stability, cleaner mathematics, and a smarter mechanism for writing information into memory. It is fully drop-in compatible with the v1 interface.
+
+What’s New in v2
+
+Time-Axis K-L Decomposition
+Uses mean-centered temporal covariance
+
+C = (Hc @ Hc.T) / T
+
+
+for extracting dominant temporal patterns.
+
+More Stable Eigen Solves
+All eigendecomposition is done on CPU in float64, preventing numerical issues on MPS/CUDA.
+
+Eigenvalue Scaling Option
+Coefficients can be scaled by sqrt(lambda) for stronger separation of major/minor modes.
+
+Attention-Based Memory Writing
+Instead of averaging, v2 learns which parts of the sequence should be stored:
+
+weights = softmax(pooling_layer(out), dim=0)
+summary = (out * weights).sum(dim=0)
+memory.append(summary)
+
+
+Optional Gradient Detach
+detach_kl=True keeps K-L extraction fixed and only trains the projection MLP if desired.
+
+When to Use v2
+
+Use v2 if you want:
+
+more stable training
+
+a cleaner and more consistent K-L extraction
+
+better long-horizon behavior
+
+improved memory writing via attention
+
+
+
+
 ## 🔗 References - See paper for more 
 
 - [Autoformer Paper](https://arxiv.org/abs/2106.13008) - Decomposition transformers baseline
