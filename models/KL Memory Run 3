@@ -5,7 +5,7 @@ import math
 
 class KLMemory(nn.Module):
     """
-    Spectral Covariance Memory (K-L Transform) - Production Gold.
+    Spectral Covariance Memory (K-L Transform).
     Includes High-Res Spectral Analysis and Robust Normalization.
     """
     def __init__(self, d_model, memory_depth=3000, n_components=32, memory_tokens=8):
@@ -63,7 +63,7 @@ class KLMemory(nn.Module):
 
 class Model(nn.Module):
     """
-    SOTA-Grade KLMemory Transformer (Gated).
+    KLMemory Transformer (Gated).
     
     Key Features:
     1. Channel Independence (CI)
@@ -88,7 +88,7 @@ class Model(nn.Module):
         self.memory = KLMemory(
             d_model=configs.d_model,
             memory_depth=3000,      
-            n_components=32,        # Increased resolution
+            n_components=32,        
             memory_tokens=4         
         )
         
