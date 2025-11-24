@@ -165,7 +165,7 @@ early_stopping_patience=3
 | Training Time | ~340-1200 seconds/epoch (M4 Mac CPU/MPS) |
 | Scaling | O(L) - linear with sequence length |
 
-## 📚 Comparison with Related Work
+## 📚 Comparison with Related Work (Will add more)
 
 | Method | Basis Type | Learnable | Adaptive | Benchmark |
 |--------|------------|-----------|----------|-----------|
