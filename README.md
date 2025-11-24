@@ -28,6 +28,8 @@ We evaluate on the standard ETTh1 benchmark with input length 96 and prediction 
 
 ### ETTh1 Long-Term Forecasting Results (input length = 96)
 
+Run 3 & 4 -> Will add final numbers
+
 #### Run 1 (best reported)
 | Horizon | MSE   | MAE   |
 |---------|-------|-------|
