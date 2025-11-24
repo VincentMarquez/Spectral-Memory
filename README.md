@@ -92,36 +92,36 @@ for pred_len in 96 192 336 720; do python run.py --task_name long_term_forecast 
 done
 ```
 
----
 
-## 🧩 Architecture Overview
+### 🧩 Architecture Overview
 
-### 1. Spectral Covariance Memory (Default)
+### 1\. Spectral Covariance Memory (Default / Production)
 
-This is the version used for all benchmark numbers.
+**Description:** This is the version used for all benchmark numbers. It uses a **low-rank bottleneck projection** to compress eigen-patterns efficiently, keeping the model lightweight (only \~0.7M parameters) and fast on both NVIDIA GPUs and Apple Silicon.
 
 ```python
-H = F.normalize(self._history, dim=1)  # [T, d_model]
-K = H @ H.T                             # feature Gram matrix
-L, V = torch.linalg.eigh(K)            # eigen decomposition
-patterns = self._history.T @ V_top     # principal patterns
-tokens = self.component_mixer(patterns)
+# Production Logic (Simplified)
+H = F.normalize(self._history, dim=1)    # [T, d_model]
+K = torch.exp(-dist / tau)               # Time-kernel (Gaussian/Exp)
+L, V = torch.linalg.eigh(K)              # Eigen decomposition
+patterns = self._history.T @ V_top       # Principal patterns
+tokens = self.component_mixer(patterns)  # Bottleneck: (K*d -> 64 -> M*d)
 ```
 
-### 2. K-L Memory v4 (Optional)
+### 2\. K-L Memory v4 (High-Capacity / Research)
 
-Additional stability features:
+**Description:** A high-capacity, paper-faithful implementation designed for experimental research.
 
-* Time-axis covariance:
-  `C = (Hc @ Hc.T) / T`
-* CPU float64 eigen-solves
-* sqrt(λ) scaling
-* Attention-based memory writing
-* Optional gradient-detach mode
+**Key Differences:**
 
-The **default results use the feature-kernel version**, v4 is available for experimentation.
+  * **Dense Projection:** Uses a wide, 2-layer MLP (no bottleneck) for maximum theoretical capacity ($O(d_{model}^2)$ parameters).
+  * **Precision:** Offloads eigen-solves to CPU (float64) for maximum numerical stability.
+  * **Features:** Includes $\sqrt{\lambda}$ scaling, attention-based memory writing, and optional gradient detachment.
 
----
+  **⚠️**This version has a larger parameters due to the dense projection layers (\~182M parameters).
+
+
+
 
 ## 📘 Comparison to Related Work
 
