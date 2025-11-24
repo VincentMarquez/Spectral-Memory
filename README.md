@@ -9,28 +9,47 @@ Preliminary It achieves **state-of-the-art** performance on ETTh1 *without pretr
 ## 📊 ETTh1 Benchmark Results (SeqLen=96)
 
 We evaluate on prediction horizons {96, 192, 336, 720} using the official **Time-Series-Library** setup.
+# K-L Memory: Spectral Memory for Long-Term Forecasting
 
-### **Run 1**
+K-L Memory combines Karhunen–Loève spectral decomposition with neural projection layers to create a long-context memory module for time-series forecasting. Preliminary results show that it achieves state-of-the-art performance on ETTh1 without pretraining, without massive depth, and trained from scratch in only 10 epochs on consumer-grade hardware (Apple M4 mini 10CPU–10GPU, 16GB).
 
-| Horizon | MSE       | MAE       |
-| ------- | --------- | --------- |
-| 96      | 0.387     | 0.408     |
-| 192     | 0.424     | 0.430     |
-| 336     | 0.452     | 0.448     |
-| 720     | 0.473     | 0.472     |
-| **Avg** | **0.434** | **0.440** |
+## 📊 ETTh1 Benchmark Results (SeqLen = 96)
 
-### **Run 2**
+We evaluate on prediction horizons {96, 192, 336, 720} using the official Time-Series-Library setup.
 
-| Horizon | MSE       | MAE       |
-| ------- | --------- | --------- |
-| 96      | 0.388     | 0.408     |
-| 192     | 0.425     | 0.430     |
-| 336     | 0.451     | 0.448     |
-| 720     | 0.485     | 0.482     |
-| **Avg** | **0.437** | **0.442** |
+### Run 1
 
-More runs (3–4) and more datasets (Weather, ECL, Traffic, ILI) incoming.
+| Horizon | MSE   | MAE   |
+|---------|-------|-------|
+| 96      | 0.387 | 0.408 |
+| 192     | 0.424 | 0.430 |
+| 336     | 0.452 | 0.448 |
+| 720     | 0.473 | 0.472 |
+| **Avg** | 0.434 | 0.440 |
+
+### Run 2
+
+| Horizon | MSE   | MAE   |
+|---------|-------|-------|
+| 96      | 0.388 | 0.408 |
+| 192     | 0.425 | 0.430 |
+| 336     | 0.451 | 0.448 |
+| 720     | 0.485 | 0.482 |
+| **Avg** | 0.437 | 0.442 |
+
+### Run 4
+
+| Horizon | MSE   | MAE   |
+|---------|-------|-------|
+| 96      | 0.411 | 0.422 |
+| 192     | 0.421 | 0.429 |
+| 336     | 0.455 | 0.447 |
+| 720     | 0.469 | 0.473 |
+| **Avg** | 0.439 | 0.443 |
+
+More runs and more datasets (Weather, ECL, Traffic, ILI) are incoming.
+
+Run (3) and more datasets (Weather, ECL, Traffic, ILI) incoming.
 
 ---
 
