@@ -2,7 +2,7 @@
 
 ## 📊 ETTh1 Benchmark Results
 
-This repository implements **K-L-Memory (Karhunen-Loève Memory Tokens)**, a novel approach that combines classical signal processing with neural learning for efficient long-context sequence modeling. Our method achieves state-of-the-art results on the ETTh1 electricity transformer temperature forecasting benchmark.
+This repository implements **K-L-Memory (Karhunen-Loève Memory Tokens)**, a novel approach that combines classical signal processing with neural learning for efficient long-context sequence modeling. Our method achieves state-of-the-art results on the ETTh1 electricity transformer temperature forecasting benchmark (Time-Series-Library).
 
 ### 🎯 Key Innovation
 
