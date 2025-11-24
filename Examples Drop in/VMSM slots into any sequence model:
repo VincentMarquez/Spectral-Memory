@@ -1,1 +1,194 @@
+# =============================================================
+# Minimal Examples
+# =============================================================
+# These examples show how to plug your KLMemory module into:
+#   1) A Transformer Encoder
+#   2) An MLP/Transformer FFN (KL-FFN)
+#   3) As standalone memory-token generator for any backbone
+#   4) A dual-lane ensemble (multi-lane KL)
+#
+# Based on real implementations:
+#   - models/KLMemory.py        (time-kernel KLMemory)
+#   - KLMemoryActivation        (activation KL)
+#   - KLMemory standalone       (spectral token generator)
+#   - Hierarchical K-L Hybrid   (ensemble/multi-lane)
+# =============================================================
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+# -------------------------------------------------------------
+# 1) BASIC TIME-KERNEL K-L MEMORY 
+# -------------------------------------------------------------
+class SimpleKLMemory(nn.Module):
+    def __init__(self, d_model, n_components=8, memory_tokens=4, tau=64.0):
+        super().__init__()
+        self.d_model   = d_model
+        self.n_components = n_components
+        self.memory_tokens = memory_tokens
+        self.tau = tau
+
+        self.register_buffer("_history", torch.zeros(0, d_model))
+        self.compress = nn.Linear(n_components * d_model, 64)
+        self.expand   = nn.Linear(64, memory_tokens * d_model)
+
+    def append(self, h):
+        # h: (B, d)
+        h = h.detach()
+        self._history = torch.cat([self._history, h], dim=0)
+        if self._history.shape[0] > 2048:
+            self._history = self._history[-2048:]
+
+    def forward(self, B):
+        T = self._history.shape[0]
+        if T < self.n_components:
+            return torch.zeros(self.memory_tokens, B, self.d_model)
+
+        t = torch.arange(T).float().to(self._history.device)
+        dt = (t[:,None] - t[None,:]).abs()
+        K  = torch.exp(-dt / (self.tau / max(T,1))) + 1e-6*torch.eye(T)
+
+        evals, evecs = torch.linalg.eigh(K)
+        top = torch.argsort(evals, descending=True)[:self.n_components]
+        phi = evecs[:, top]                 # (T, k)
+        coeffs = phi.T @ self._history      # (k, d)
+
+        flat = coeffs.reshape(1, -1)
+        h = F.gelu(self.compress(flat))
+        mem = self.expand(h).reshape(self.memory_tokens, self.d_model)
+        return mem.unsqueeze(1).expand(-1, B, -1)   # (Mem, B, d)
+
+
+# -------------------------------------------------------------
+# 2) KLMemory INSIDE AN FFN (KLMemoryActivation variant)
+# -------------------------------------------------------------
+class KLMemoryActivation(nn.Module):
+    """
+    Drop-in layer replacing GeLU inside FFNs.
+    Injects KL-memory recurrence into the activation path.
+    """
+    def __init__(self, d_model, tau=64.0):
+        super().__init__()
+        self.tau = tau
+        self.register_buffer("_hist", torch.zeros(0, d_model))
+
+    def append(self, x):
+        self._hist = torch.cat([self._hist, x.detach()], dim=0)
+        if self._hist.shape[0] > 1024:
+            self._hist = self._hist[-1024:]
+
+    def forward(self, x):
+        B, L, D = x.shape
+        self.append(x.mean(dim=1))    # store sequence summary
+
+        T = self._hist.shape[0]
+        if T < 4:
+            return F.gelu(x)
+
+        t = torch.arange(T).float().to(x.device)
+        dt = (t[:,None] - t[None,:]).abs()
+        K  = torch.exp(-dt / (self.tau / max(T,1))) + 1e-6*torch.eye(T)
+        evals, evecs = torch.linalg.eigh(K)
+        idx = torch.argsort(evals, descending=True)[0]
+        mode = evecs[:, idx].unsqueeze(0)  # (1, T)
+        proj = mode @ self._hist           # (1, d)
+
+        proj = proj.unsqueeze(1).expand(-1, L, -1)  # broadcast
+        return F.gelu(x + proj)   # KL-modulated activation
+
+
+# -------------------------------------------------------------
+# 3) KLMemory AS STANDALONE TOKEN GENERATOR
+# -------------------------------------------------------------
+class MyBackbone(nn.Module):
+    """
+    Any model (Transformer, GRU, Mamba…)
+    can accept spectral tokens from KLMemory.
+    """
+    def __init__(self, d_model=64):
+        super().__init__()
+        self.encoder = nn.TransformerEncoder(
+            nn.TransformerEncoderLayer(
+                d_model=d_model,
+                nhead=4,
+                dim_feedforward=128,
+                activation='gelu',
+                batch_first=False
+            ),
+            num_layers=2
+        )
+        self.out = nn.Linear(d_model, 1)
+
+    def forward(self, seq, mem_tokens):
+        # seq: (L, B, d)
+        x = torch.cat([mem_tokens, seq], dim=0)  # prepend tokens
+        x = self.encoder(x)
+        return self.out(x[-1])  # predict using last token
+
+
+# -------------------------------------------------------------
+# 4) DUAL-LANE KL SYSTEM (Hierarchical / Ensemble)
+# -------------------------------------------------------------
+class DualLaneKL(nn.Module):
+    """
+    Very small demo of your "Hierarchical K-L Hybrid":
+    Two lanes → two outputs → KLMemory merges them.
+    """
+    def __init__(self, d_model=64):
+        super().__init__()
+        self.lane1 = nn.GRU(d_model, d_model, num_layers=1)
+        self.lane2 = nn.GRU(d_model, d_model, num_layers=1)
+
+        self.merge_kl = SimpleKLMemory(d_model, n_components=8, memory_tokens=4)
+        self.fc = nn.Linear(d_model, 1)
+
+    def forward(self, x):
+        """
+        x: (L, B, d)
+        """
+        out1, _ = self.lane1(x)
+        out2, _ = self.lane2(x)
+        final = 0.5*(out1 + out2)         # ensemble
+
+        # update KL memory with lane mean
+        self.merge_kl.append(final[-1])
+
+        # retrieve KL tokens
+        mem = self.merge_kl(B=final.shape[1])
+
+        # merge tokens + final hidden state
+        fused = final[-1] + mem.mean(dim=0)
+
+        return self.fc(fused)            # (B, 1)
+
+
+# -------------------------------------------------------------
+# RUNNABLE EXAMPLES
+# -------------------------------------------------------------
+if __name__ == "__main__":
+    B, L, D = 4, 32, 64
+    x = torch.randn(L, B, D)
+
+    print("\n[1] KLMemory + Transformer")
+    kl = SimpleKLMemory(D)
+    kl.append(x[-1])
+    mem = kl(B)
+    backbone = MyBackbone(D)
+    y = backbone(x, mem)
+    print("Output:", y.shape)
+
+    print("\n[2] KLMemoryActivation inside FFN")
+    act = KLMemoryActivation(D)
+    out = act(x.permute(1,0,2))  # (B,L,D)
+    print("Activation Output:", out.shape)
+
+    print("\n[3] Standalone KL tokens")
+    mem2 = kl(B)
+    print("Mem tokens:", mem2.shape)
+
+    print("\n[4] Dual-Lane KL Ensemble")
+    model = DualLaneKL(D)
+    y = model(x)
+    print("Dual-Lane Output:", y.shape)
 
