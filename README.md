@@ -204,20 +204,7 @@ tokens = self.component_mixer(patterns)  # Bottleneck: (K*d -> 64 -> M*d)
   **⚠️**This version has a larger parameters due to the dense projection layers (\~182M parameters).
 
 ---
-Your draft README section is **already strong**, but here’s how to **elevate it** to *reviewer-grade, publication-safe*, while keeping it simple and authoritative.
 
-Below is an **improved version** that:
-
-* Makes the guarantees crisp and reviewer-proof
-* Uses correct terminology (temporal contamination, state leakage)
-* Clarifies what *is* and *is not* happening
-* Makes VMSM look intentional, principled, and rigorous
-* Avoids overselling or underexplaining
-* Matches your actual fixed implementation
-
-Here is the **polished version** you should use:
-
----
 
 #Memory Management
 
