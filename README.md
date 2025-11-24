@@ -97,7 +97,7 @@ done
 
 ### 1\. Spectral Covariance Memory (K-L Memory, V1,V2,V3)
 
-**Description:** This is the version used for all benchmark numbers. It uses a **low-rank bottleneck projection** to compress eigen-patterns efficiently, keeping the model lightweight (only \~0.7M parameters) and fast on both NVIDIA GPUs and Apple Silicon.
+**Description:** This is the version used for all benchmark numbers. It uses a **low-rank bottleneck projection** to compress eigen-patterns efficiently, keeping the model lightweight (only \~7M parameters) and fast on both NVIDIA GPUs and Apple Silicon.
 
 ```python
 #  Logic (Simplified)
@@ -110,7 +110,7 @@ tokens = self.component_mixer(patterns)  # Bottleneck: (K*d -> 64 -> M*d)
 
 ### 2\. K-L Memory v4 (High-Capacity / Research)
 
-**Description:** A high-capacity, paper-faithful implementation designed for experimental research.
+**Description:** A high-capacity, implementation designed for experimental research.
 
 **Key Differences:**
 
