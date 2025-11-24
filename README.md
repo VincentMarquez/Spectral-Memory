@@ -33,15 +33,6 @@ We evaluate on the standard ETTh1 benchmark with input length 96 and prediction 
 | K-L-Memory (Run 2) | 0.387 | 0.424 | 0.452 | 0.473 | 0.434 | -18.7% |
 | K-L-Memory (Run 3) | 0.388 | 0.425 | 0.451 | 0.485 | 0.437 | -18.1% |
 | MAE |  |  |  |  |  |  |
-| Transformer | 0.713 | 0.757 | 0.809 | 0.991 | 0.818 | - |
-| Autoformer | 0.459 | 0.479 | 0.491 | 0.575 | 0.501 | - |
-| K-L-Memory (Run 1) | 0.408 | 0.430 | 0.448 | 0.531 | 0.454 | -9.3% |
-| K-L-Memory (Run 2) | 0.408 | 0.430 | 0.448 | 0.472 | 0.440 | -12.1% |
-| K-L-Memory (Run 3) | 0.408 | 0.430 | 0.448 | 0.482 | 0.442 | -11.7% |
-Key Results (Best Run):
- * 🏆 18.7% MSE reduction over Autoformer (averaged across all horizons)
- * 🏆 60.2% MSE reduction over vanilla Transformer
- * 🏆 Significant Long-Term Stability: Run 2 demonstrates that K-L decomposition maintains coherence even at H=720 (MSE 0.473 vs Autoformer 0.664).
 
 
 
@@ -236,3 +227,10 @@ For questions or collaborations, please open an issue or contact [].
 ---
 
 **Note**: K-L-Memory is part of ongoing research. While we achieve strong results on ETTh1, comprehensive evaluation across additional benchmarks (Weather, Traffic, ECL) is in progress.
+
+
+## License
+
+This project is licensed under the **MIT License** – see the [LICENSE](LICENSE) file for details.
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
