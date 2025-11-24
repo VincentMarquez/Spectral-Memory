@@ -1,5 +1,4 @@
-
-# K-L Memory: Spectral Memory for Long-Term Forecasting
+Vincent Marquez Spectral Memory (VMSM): A General Spectral Memory Architecture for Sequence Models
 
 K-L Memory combines **Karhunen–Loève spectral decomposition** with neural projection layers to create a **long-context memory module** for time-series forecasting.
 Preliminary It achieves **state-of-the-art** performance on ETTh1 *without pretraining*, *without massive depth*, and *trained from scratch in only 10 epochs, with consumer grade hardware (Apple M4 mini 10CPU-10GPU 16GB)*. 
