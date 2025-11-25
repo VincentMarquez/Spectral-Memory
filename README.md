@@ -150,13 +150,37 @@ wget https://github.com/zhouhaoyi/ETDataset/raw/main/ETT-small/ETTh1.csv -P ./da
 
 ```bash
 export PYTORCH_ENABLE_MPS_FALLBACK=1
-for pred_len in 96 192 336 720; do 
-  python run.py --task_name long_term_forecast --is_training 1 --root_path ./dataset/ \
-    --data_path ETTh1.csv --model_id ETTh1_96_${pred_len} --model KLMemory \
-    --data ETTh1 --features M --seq_len 96 --label_len 48 --pred_len $pred_len \
-    --e_layers 2 --d_layers 1 --factor 3 --enc_in 7 --dec_in 7 --c_out 7 \
-    --train_epochs 10 --batch_size 32 --learning_rate 0.0001 --itr 1 \
-    --use_gpu false --gpu_type mps 
+
+for seed in 2019 2020 2021 2022 2023; do
+  for pred_len in 96 192 336 720; do 
+    python run.py \
+      --task_name long_term_forecast \
+      --is_training 1 \
+      --root_path ./dataset/ \
+      --data_path ETTh1.csv \
+      --model_id KLMemory_ETTh1_L96_pl${pred_len}_seed${seed} \
+      --model KLMemory \
+      --data ETTh1 \
+      --features M \
+      --seq_len 96 \
+      --label_len 48 \
+      --pred_len $pred_len \
+      --e_layers 2 \
+      --d_layers 1 \
+      --factor 3 \
+      --enc_in 7 \
+      --dec_in 7 \
+      --c_out 7 \
+      --train_epochs 10 \
+      --patience 3 \
+      --batch_size 32 \
+      --learning_rate 0.0001 \
+      --itr 1 \
+      --use_gpu false \
+      --gpu_type mps \
+      --seed $seed
+  done
+done
 done
 ```
 
