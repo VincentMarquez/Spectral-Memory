@@ -89,17 +89,7 @@ Ideal for long-term forecasting and long-context modeling.
 
 Spectral Memory is a **new memory class** because no other mechanism performs **online spectral extraction → learnable tokenization → reinjection**.
 
----
 
-## Minimal Usage (Pseudocode)
-
-```python
-memory = SpectralMemory(d_model=512, memory_depth=3000, n_components=32, memory_tokens=8)
-
-h = encoder_hidden_states   # [B, L, d_model]
-m = memory(h)               # spectral memory tokens
-out = model_with_memory(h, m)
-```
 ## Results
 
 | Model | MSE |
