@@ -127,7 +127,7 @@ Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-S
 | 720     | 0.485 | 0.482 |
 | **Avg** | 0.437 | 0.442 |
 
-###**Run 3**
+**Run 3**
 | Horizon | MSE    | MAE    |
 |---------|--------|--------|
 | 96      | 0.3804 | 0.4016 |
