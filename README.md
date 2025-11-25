@@ -1,5 +1,3 @@
----
-
 # The Spectrum Remembers
 
 ### **Spectral Memory for Long-Context Sequence Modeling**
