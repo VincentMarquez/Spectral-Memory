@@ -100,14 +100,29 @@ h = encoder_hidden_states   # [B, L, d_model]
 m = memory(h)               # spectral memory tokens
 out = model_with_memory(h, m)
 ```
-Horizon	Seed 2019	Seed 2020	Seed 2021	 AVG
-96	0.418	0.381	0.380	0.393
-192	0.418	0.42	0.4186	0.418
-336	0.451	0.456	0.4507	0.452
-720	0.446	0.501	0.468	0.471
-AVG	0.433	0.440	0.429	0.434
-<img width="784" height="147" alt="image" src="https://github.com/user-attachments/assets/1fd63f49-c9fe-48a4-a9ed-2bf8515a22ba" />
+## Results
 
+| Model | MSE |
+|-------|-----|
+| **Spectral Memory (Ours)** | **0.434** |
+| TimeXer | 0.437 |
+| iTransformer | 0.454 |
+| DLinear | 0.456 |
+| TimesNet | 0.458 |
+| PatchTST | 0.469 |
+| Autoformer | 0.496 |
+
+*Baseline results taken from respective publications under identical experimental settings (seq_len=96, pred_len ∈ {96, 192, 336, 720}).*
+
+### ETTh1 Results by Seed
+
+| Horizon | Seed 2019 | Seed 2020 | Seed 2021 | Average |
+|---------|-----------|-----------|-----------|---------|
+| 96 | 0.418 | 0.381 | 0.380 | 0.393 |
+| 192 | 0.418 | 0.420 | 0.419 | 0.419 |
+| 336 | 0.451 | 0.456 | 0.451 | 0.452 |
+| 720 | 0.446 | 0.501 | 0.468 | 0.472 |
+| **Avg** | 0.433 | 0.440 | 0.429 | **0.434** |
 ---
 
 ## ETTh1 Benchmark Results (SeqLen = 96)
