@@ -100,6 +100,13 @@ h = encoder_hidden_states   # [B, L, d_model]
 m = memory(h)               # spectral memory tokens
 out = model_with_memory(h, m)
 ```
+Horizon	Seed 2019	Seed 2020	Seed 2021	 AVG
+96	0.418	0.381	0.380	0.393
+192	0.418	0.42	0.4186	0.418
+336	0.451	0.456	0.4507	0.452
+720	0.446	0.501	0.468	0.471
+AVG	0.433	0.440	0.429	0.434
+<img width="784" height="147" alt="image" src="https://github.com/user-attachments/assets/1fd63f49-c9fe-48a4-a9ed-2bf8515a22ba" />
 
 ---
 
@@ -109,46 +116,6 @@ Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-S
 All used seed 2021 below runs 1-4
 
 
-
-### **Run 1**
-
-| Horizon | MSE   | MAE   |
-| ------- | ----- | ----- |
-| 96      | 0.387 | 0.408 |
-| 192     | 0.424 | 0.430 |
-| 336     | 0.452 | 0.448 |
-| 720     | 0.473 | 0.472 |
-| **Avg** | 0.434 | 0.440 |
-
-### **Run 2**
-
-| Horizon | MSE   | MAE   |
-| ------- | ----- | ----- |
-| 96      | 0.388 | 0.408 |
-| 192     | 0.425 | 0.430 |
-| 336     | 0.451 | 0.448 |
-| 720     | 0.485 | 0.482 |
-| **Avg** | 0.437 | 0.442 |
-
-**Run 3**
-| Horizon | MSE    | MAE    |
-|---------|--------|--------|
-| 96      | 0.3804 | 0.4016 |
-| 192     | 0.4186 | 0.4270 |
-| 336     | 0.4507 | 0.4456 |
-| 720     | 0.4680 | 0.4698 |
-| **Avg** | 0.4294 | 0.4360 |
-
-
-### **Run 4**
-
-| Horizon | MSE   | MAE   |
-| ------- | ----- | ----- |
-| 96      | 0.411 | 0.422 |
-| 192     | 0.421 | 0.429 |
-| 336     | 0.455 | 0.447 |
-| 720     | 0.469 | 0.473 |
-| **Avg** | 0.439 | 0.443 |
 
 Additional datasets (Weather, ECL, Traffic, ILI) forthcoming.
 
