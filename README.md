@@ -106,6 +106,9 @@ out = model_with_memory(h, m)
 ## ETTh1 Benchmark Results (SeqLen = 96)
 
 Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-Series-Library**.
+All used seed 2021 below runs 1-4
+
+
 
 ### **Run 1**
 
