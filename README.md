@@ -1,22 +1,21 @@
-
 ---
 
-# Vincent Marquez Spectral Memory (VMSM)
+# The Spectrum Remembers
 
-### **A New Class of General Spectral Memory Architecture for Sequence Models**
+### **Spectral Memory for Long-Context Sequence Modeling**
 
-**Vincent Marquez Spectral Memory (VMSM)** is a new memory mechanism designed for long-range sequence modeling.
+**Spectral Memory** is a new memory mechanism designed for long-range sequence modeling.
 It introduces a **general spectral memory architecture** that compresses historical hidden states using online Karhunen–Loève decomposition and transforms the dominant spectral modes into **learnable memory tokens**.
 
-VMSM works as a plug-in module inside Transformers, SSMs, RNNs, or any encoder stack.
+Spectral Memory works as a plug-in module inside Transformers, SSMs, RNNs, or any encoder stack.
 
 ---
 
-# 🔍 What Makes VMSM a New Memory Class?
+## What Makes Spectral Memory a New Memory Class?
 
 ### **1. Spectral Memory Tokens (SMTs)**
 
-VMSM introduces a new memory object: **Spectral Memory Tokens**, derived from the dominant eigenmodes of the hidden-state history.
+Spectral Memory introduces a new memory object: **Spectral Memory Tokens**, derived from the dominant eigenmodes of the hidden-state history.
 
 These are **not**:
 
@@ -30,7 +29,7 @@ Instead, they are **spectral modes shaped into learnable memory tokens.**
 
 ### **2. Full Spectral Memory Pipeline**
 
-VMSM is **not PCA**, **not SVD**, and **not a low-rank trick**.
+Spectral Memory is **not PCA**, **not SVD**, and **not a low-rank trick**.
 It is a complete architectural memory mechanism:
 
 ```
@@ -45,7 +44,7 @@ No prior architecture uses this pipeline.
 
 ### **3. Architecture-Agnostic**
 
-VMSM slots into any sequence model:
+Spectral Memory slots into any sequence model:
 
 * Transformers (Autoformer, PatchTST, Informer, etc.)
 * SSMs (S4, S5, Mamba)
@@ -59,7 +58,7 @@ It operates **independently** of attention, recurrence, or SSM update rules.
 
 ### **4. Long-Range Memory With Spectral Stability**
 
-VMSM stores the most persistent spectral patterns, enabling:
+Spectral Memory stores the most persistent spectral patterns, enabling:
 
 * strong long-range memory
 * noise suppression
@@ -71,7 +70,7 @@ Ideal for long-term forecasting and long-context modeling.
 
 ---
 
-# 📦 Why Use VMSM?
+## Why Use Spectral Memory?
 
 * **Consistent ETTh1 improvements** with minimal architectural cost
 * **Drop-in module** — no redesign of the backbone
@@ -81,23 +80,23 @@ Ideal for long-term forecasting and long-context modeling.
 
 ---
 
-# 🧠 How VMSM Differs From Other Memory Types
+## How Spectral Memory Differs From Other Memory Types
 
-| Memory Type    | What It Stores                  | Limitation                       | How VMSM Differs                  |
+| Memory Type    | What It Stores                  | Limitation                       | How Spectral Memory Differs       |
 | -------------- | ------------------------------- | -------------------------------- | --------------------------------- |
 | Attention      | Key/Value projections of tokens | O(n²) cost, short-range collapse | Stores global spectral modes      |
 | RNN/SSM        | Recurrent hidden state          | Exponential decay                | Eigenmodes persist indefinitely   |
 | PCA/SVD tricks | Offline compression             | Not learnable, not dynamic       | Online, learnable, task-adaptive  |
 | Convolutions   | Local filters                   | Limited receptive field          | Global, frequency-aware structure |
 
-VMSM is a **new memory class** because no other mechanism performs **online spectral extraction → learnable tokenization → reinjection**.
+Spectral Memory is a **new memory class** because no other mechanism performs **online spectral extraction → learnable tokenization → reinjection**.
 
 ---
 
-# 🧱 Minimal Usage (Pseudocode)
+## Minimal Usage (Pseudocode)
 
 ```python
-memory = VMSM(d_model=512, memory_depth=3000, n_components=32, memory_tokens=8)
+memory = SpectralMemory(d_model=512, memory_depth=3000, n_components=32, memory_tokens=8)
 
 h = encoder_hidden_states   # [B, L, d_model]
 m = memory(h)               # spectral memory tokens
@@ -106,9 +105,7 @@ out = model_with_memory(h, m)
 
 ---
 
-
-
-# 📊 ETTh1 Benchmark Results (SeqLen = 96)
+## ETTh1 Benchmark Results (SeqLen = 96)
 
 Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-Series-Library**.
 
@@ -132,7 +129,7 @@ Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-S
 | 720     | 0.485 | 0.482 |
 | **Avg** | 0.437 | 0.442 |
 
-### **Run 4**
+### **Run 3**
 
 | Horizon | MSE   | MAE   |
 | ------- | ----- | ----- |
@@ -142,11 +139,11 @@ Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-S
 | 720     | 0.469 | 0.473 |
 | **Avg** | 0.439 | 0.443 |
 
-Run (3) and more datasets (Weather, ECL, Traffic, ILI) incoming.
+Additional datasets (Weather, ECL, Traffic, ILI) forthcoming.
 
 ---
 
-# 🛠️ Reproducing Results
+## Reproducing Results
 
 ### Install
 
@@ -176,14 +173,14 @@ done
 
 ---
 
-# 🧩 Architecture Overview
+## Architecture Overview
 
-### **K-L Memory (VMSM v1/v2/v3 — Used for Benchmarks)**
+### **K-L Memory (Spectral Memory v1/v2/v3 — Used for Benchmarks)**
 
-**Description:** This is the version used for all benchmark numbers. It uses a **low-rank bottleneck projection** to compress eigen-patterns efficiently, keeping the model lightweight (only \~7M parameters) and fast on both NVIDIA GPUs and Apple Silicon.
+This is the version used for all benchmark numbers. It uses a **low-rank bottleneck projection** to compress eigen-patterns efficiently, keeping the model lightweight (~7M parameters) and fast on both NVIDIA GPUs and Apple Silicon.
 
 ```python
-#  Logic (Simplified)
+# Logic (Simplified)
 H = F.normalize(self._history, dim=1)    # [T, d_model]
 K = torch.exp(-dist / tau)               # Time-kernel (Gaussian/Exp)
 L, V = torch.linalg.eigh(K)              # Eigen decomposition
@@ -191,35 +188,34 @@ patterns = self._history.T @ V_top       # Principal patterns
 tokens = self.component_mixer(patterns)  # Bottleneck: (K*d -> 64 -> M*d)
 ```
 
-### 2\. K-L Memory (VMSM v4) (High-Capacity / Research)
+### **K-L Memory (Spectral Memory v4) — High-Capacity / Research**
 
-**Description:** A high-capacity, implementation designed for experimental research.
+A high-capacity implementation designed for experimental research.
 
 **Key Differences:**
 
-  * **Dense Projection:** Uses a wide, 2-layer MLP (no bottleneck) for maximum theoretical capacity ($O(d_{model}^2)$ parameters).
-  * **Precision:** Offloads eigen-solves to CPU (float64) for maximum numerical stability.
-  * **Features:** Includes $\sqrt{\lambda}$ scaling, attention-based memory writing, and optional gradient detachment.
+* **Dense Projection:** Uses a wide, 2-layer MLP (no bottleneck) for maximum theoretical capacity (O(d_model²) parameters).
+* **Precision:** Offloads eigen-solves to CPU (float64) for maximum numerical stability.
+* **Features:** Includes √λ scaling, attention-based memory writing, and optional gradient detachment.
 
-  **⚠️**This version has a larger parameters due to the dense projection layers (\~182M parameters).
+**Note:** This version has larger parameter count due to the dense projection layers (~182M parameters).
 
 ---
 
+## Memory Management
 
-#Memory Management
-
-Memory-based forecasting architectures require special care to avoid **cross-phase contamination** and ensure that evaluation faithfully reflects generalization. This implementation includes explicit safeguards to guarantee that **KLMemory / VMSM** behaves properly under the standard Time-Series-Library benchmarking protocol.
+Memory-based forecasting architectures require special care to avoid **cross-phase contamination** and ensure that evaluation faithfully reflects generalization. This implementation includes explicit safeguards to guarantee that **Spectral Memory** behaves properly under the standard Time-Series-Library benchmarking protocol.
 
 ### **1. Cross-Phase Memory Isolation**
 
-The KLMemory state buffer is **never shared** across training, validation, or test phases.
-To enforce this:
+The Spectral Memory state buffer is **never shared** across training, validation, or test phases. To enforce this:
 
 * Memory is **reset at the start of every training epoch**
 * Memory is **reset immediately before validation**
 * Memory is **reset immediately before test evaluation**
 
-These resets are performed through the model’s `reset_memory()` method, which the experiment runner invokes automatically at each phase transition.
+These resets are performed through the model's `reset_memory()` method, which the experiment runner invokes automatically at each phase transition.
+
 **Result:** No spectral information from training can leak into validation or test predictions.
 
 ---
@@ -232,7 +228,7 @@ The Karhunen–Loève computation (`detach_kl=True`) is **non-trainable by desig
 * Only the downstream **MLP projection** is optimized
 * No gradients flow through the covariance matrix or eigenvectors
 
-This prevents the model from “bending” the spectral basis toward specific training examples and ensures that KLMemory learns **distribution-level structure**, not shortcut encodings of specific sequences.
+This prevents the model from "bending" the spectral basis toward specific training examples and ensures that Spectral Memory learns **distribution-level structure**, not shortcut encodings of specific sequences.
 
 ---
 
@@ -244,49 +240,36 @@ This implementation follows the official **Time-Series-Library** protocol:
 * Validation and test loaders remain unshuffled
 * Covariance extraction is robust to batch ordering and does not access future horizon values
 
-The KLMemory mechanism compresses **latent training dynamics**, not raw future values or label information, and is therefore **fully compliant with the TSL temporal evaluation standard**.
-
-
-
-
-# 📘 Comparison to Related Work
-
-| Method          | Basis Type            | Learnable | Adaptive    | Notes                |
-| --------------- | --------------------- | --------- | ----------- | -------------------- |
-| Autoformer      | Trend/Seasonal        | ✗         | Fixed       | Strong 2021 baseline |
-| iTransformer    | Inverted Attention    | ✓         | Task-only   | Current SOTA         |
-| PatchTST        | Patch Embeddings      | ✓         | Task-only   | Very competitive     |
-| **VMSM (Ours)** | KL Eigenbasis + Mixer | ✓         | Data + Task | Simple, fast, robust |
+The Spectral Memory mechanism compresses **latent training dynamics**, not raw future values or label information, and is therefore **fully compliant with the TSL temporal evaluation standard**.
 
 ---
 
-# 🔗 Citation
+## Comparison to Related Work
 
-```
-Marquez, Vincent. (2025). VMSM: Vincent Marquez Spectral Memory. GitHub Repository.
+| Method                    | Basis Type            | Learnable | Adaptive    | Notes                |
+| ------------------------- | --------------------- | --------- | ----------- | -------------------- |
+| Autoformer                | Trend/Seasonal        | ✗         | Fixed       | Strong 2021 baseline |
+| iTransformer              | Inverted Attention    | ✓         | Task-only   | Current SOTA         |
+| PatchTST                  | Patch Embeddings      | ✓         | Task-only   | Very competitive     |
+| **Spectral Memory (Ours)**| KL Eigenbasis + Mixer | ✓         | Data + Task | Simple, fast, robust |
+
+---
+
+## Citation
+
+```bibtex
+@article{marquez2025spectral,
+  title   = {The Spectrum Remembers: Spectral Memory for Long-Context Sequence Modeling},
+  author  = {Marquez, Vincent},
+  year    = {2025},
+  note    = {GitHub Repository}
+}
 ```
 
 ---
 
-# 📄 License
+## License
 
 MIT License — see [LICENSE](LICENSE).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
