@@ -11,7 +11,7 @@ Spectral Memory works as a plug-in module inside Transformers, SSMs, RNNs, or an
 
 ## What Makes Spectral Memory 
 
-### **1. Spectral Memory Tokens (SMTs)**
+### ** Spectral Memory Tokens (SMTs)**
 
 Spectral Memory introduces a new memory object: **Spectral Memory Tokens**, derived from the dominant eigenmodes of the hidden-state history.
 
@@ -25,7 +25,7 @@ Instead, they are **spectral modes shaped into learnable memory tokens.**
 
 ---
 
-### **2. Full Spectral Memory Pipeline**
+### ** Full Spectral Memory Pipeline**
 
 Spectral Memory is **not PCA**, **not SVD**, and **not a low-rank trick**.
 It is a complete architectural memory mechanism:
@@ -40,7 +40,7 @@ No prior architecture uses this pipeline.
 
 ---
 
-### **3. Architecture-Agnostic**
+### ** Architecture-Agnostic**
 
 Spectral Memory slots into any sequence model:
 
@@ -54,7 +54,7 @@ It operates **independently** of attention, recurrence, or SSM update rules.
 
 ---
 
-### **4. Long-Range Memory With Spectral Stability**
+### ** Long-Range Memory With Spectral Stability**
 
 Spectral Memory stores the most persistent spectral patterns, enabling:
 
@@ -137,26 +137,18 @@ all baselines. Results are averaged from all prediction lengths S = {96, 192, 33
 
 
 
-### KLMemory Results by Seed (run 1)
 
-| Horizon | Seed 2019 | Seed 2020 | Seed 2021 | Average |
-|---------|-----------|-----------|-----------|---------|
-| 96 | 0.418 | 0.381 | 0.380 | 0.393 |
-| 192 | 0.418 | 0.420 | 0.419 | 0.419 |
-| 336 | 0.451 | 0.456 | 0.451 | 0.452 |
-| 720 | 0.446 | 0.501 | 0.468 | 0.472 |
-| **Avg** | 0.433 | 0.440 | 0.429 | **0.434** |
----
-
-## ETTh1 Benchmark Results
-
-Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-Series-Library**.
-Additional datasets (Weather, ECL, Traffic, ILI) forthcoming.
 
 ### KLMemory Performance (ETTh1)
 ## Performance Benchmarks
 
 The following table demonstrates the performance of **KLMemory** on the **ETTh1** dataset. Results are reported across four standard prediction lengths (96, 192, 336, 720) using 5 distinct random seeds to ensure robustness.
+
+***
+Additional datasets (Exchange, Weather, ECL, Traffic, ILI) forthcoming.
+***
+
+
 
 ### ETTh1 Evaluation Results
 
