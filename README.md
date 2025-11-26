@@ -9,7 +9,7 @@ Spectral Memory works as a plug-in module inside Transformers, SSMs, RNNs, or an
 
 ---
 
-## What Makes Spectral Memory a New Memory Class?
+## What Makes Spectral Memory 
 
 ### **1. Spectral Memory Tokens (SMTs)**
 
