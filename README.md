@@ -395,7 +395,7 @@ You can paste this directly into your README.
 
 ---
 
-# 🔒 Leakage Detection & Sanity Validation
+#  Leakage Detection & Sanity Validation
 
 Time-series forecasting pipelines are vulnerable to hidden data leakage through window misalignment, preprocessing mistakes, or unintended model state carryover. To ensure KLMemory is evaluated correctly and does not benefit from leaked future information, we performed an extensive set of destructive sanity checks.
 
@@ -406,7 +406,7 @@ All tests were run on the **Exchange-Rate** dataset (96-step horizon).
 
 ---
 
-# ✅ 1. Normal Evaluation (Baseline)
+#  1. Normal Evaluation (Baseline)
 
 | Mode       | MSE         | MAE     |
 | ---------- | ----------- | ------- |
@@ -416,7 +416,7 @@ This is the expected performance using real, unmodified inputs.
 
 ---
 
-# 🔁 2. Input–Target Misalignment Test (Shuffle-X)
+#  2. Input–Target Misalignment Test (Shuffle-X)
 
 We shuffle encoder windows within the batch, breaking the natural pairing between each input window and its corresponding label:
 
@@ -435,7 +435,7 @@ This confirms no strict index-based leakage.
 
 ---
 
-# 📉 3. Gaussian Noise Test (Encoder Information Removed)
+#  3. Gaussian Noise Test (Encoder Information Removed)
 
 All encoder inputs are replaced with random Gaussian noise:
 
@@ -452,7 +452,7 @@ Significant degradation indicates that the model depends heavily on actual histo
 
 ---
 
-# 🧪 4. Additional Input-Corruption Variants
+#  4. Additional Input-Corruption Variants
 
 (Testing alternate pathways)
 
@@ -477,7 +477,7 @@ Similar degradation across all variants rules out decoder-based leakage and time
 
 ---
 
-# 🧱 5. Full Isolation Test (Noise + Zero Ancillary Inputs + Per-Batch Memory Reset)
+#  5. Full Isolation Test (Noise + Zero Ancillary Inputs + Per-Batch Memory Reset)
 
 This setting removes all meaningful input channels **and** disables cross-batch state:
 
@@ -500,7 +500,7 @@ Performance remains in the degraded range (~2.9 MSE), demonstrating that the mod
 
 ---
 
-# 🧠 Overall Conclusion
+# Overall Conclusion
 
 KLMemory shows:
 
@@ -519,11 +519,6 @@ These results confirm that the reported forecasts are **valid, leak-free, and th
 | **noise_x_zero_dec**             | Noise encoder + zero decoder                                                               | **Noise**         | Zero              | Real              | Normal              | **2.8828** | Confirms decoder is not leaking future info  |
 | **noise_x_zero_marks**           | Noise encoder + zero time features                                                         | **Noise**         | Standard          | **Zero**          | Normal              | **2.8880** | Time marks do not encode future information  |
 | **noise_x_zero_all_reset_batch** | Full isolation: noise encoder + zero decoder + zero time features + per-batch memory reset | **Noise**         | Zero              | Zero              | **Reset per batch** | **2.9053** | Confirms no cross-batch state contamination  |
-
-
-
-
-
 
 
 
