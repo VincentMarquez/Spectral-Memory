@@ -174,36 +174,8 @@ done
 done
 ```
 
----
 
-## Architecture Overview
 
-### **K-L Memory (Spectral Memory v1/v2/v3 — Used for Benchmarks)**
-
-This is the version used for all benchmark numbers. It uses a **low-rank bottleneck projection** to compress eigen-patterns efficiently, keeping the model lightweight (~7M parameters) and fast on both NVIDIA GPUs and Apple Silicon.
-
-```python
-# Logic (Simplified)
-H = F.normalize(self._history, dim=1)    # [T, d_model]
-K = torch.exp(-dist / tau)               # Time-kernel (Gaussian/Exp)
-L, V = torch.linalg.eigh(K)              # Eigen decomposition
-patterns = self._history.T @ V_top       # Principal patterns
-tokens = self.component_mixer(patterns)  # Bottleneck: (K*d -> 64 -> M*d)
-```
-
-### **K-L Memory (Spectral Memory v4) — High-Capacity / Research**
-
-A high-capacity implementation designed for experimental research.
-
-**Key Differences:**
-
-* **Dense Projection:** Uses a wide, 2-layer MLP (no bottleneck) for maximum theoretical capacity (O(d_model²) parameters).
-* **Precision:** Offloads eigen-solves to CPU (float64) for maximum numerical stability.
-* **Features:** Includes √λ scaling, attention-based memory writing, and optional gradient detachment.
-
-**Note:** This version has larger parameter count due to the dense projection layers (~182M parameters).
-
----
 
 ## Memory Management
 
