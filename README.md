@@ -87,7 +87,7 @@ Ideal for long-term forecasting and long-context modeling.
 | PCA/SVD tricks | Offline compression             | Not learnable, not dynamic       | Online, learnable, task-adaptive  |
 | Convolutions   | Local filters                   | Limited receptive field          | Global, frequency-aware structure |
 
-Spectral Memory is a **new memory class** because no other mechanism performs **online spectral extraction → learnable tokenization → reinjection**.
+Spectral Memory is a **Potentialy new memory class** because no other mechanism performs **online spectral extraction → learnable tokenization → reinjection**.
 
 
 ## Results
@@ -152,12 +152,10 @@ all baselines. Results are averaged from all prediction lengths S = {96, 192, 33
 | **Avg** | 0.433 | 0.440 | 0.429 | **0.434** |
 ---
 
-## ETTh1 Benchmark Results (SeqLen = 96)
+## ETTh1 Benchmark Results
 
 Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-Series-Library**.
 Additional datasets (Weather, ECL, Traffic, ILI) forthcoming.
-
-Based on the training logs provided, here is the breakdown of the **MSE** (Mean Squared Error) and **MAE** (Mean Absolute Error) for the `KLMemory` model on the `ETTh1` dataset, separated by prediction length (`pred_len`) and random seed.
 
 ### KLMemory Performance (ETTh1)
 ## Performance Benchmarks
