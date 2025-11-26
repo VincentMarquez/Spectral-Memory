@@ -1,8 +1,8 @@
 # The Spectrum Remembers
 
-### **Spectral Memory for Long-Context Sequence Modeling**
 
-**Spectral Memory** is a new memory mechanism designed for long-range sequence modeling.
+
+**Spectral Memory** is a potentialy new memory mechanism 
 It introduces a **general spectral memory architecture** that compresses historical hidden states using online Karhunen–Loève decomposition and transforms the dominant spectral modes into **learnable memory tokens**.
 
 Spectral Memory works as a plug-in module inside Transformers, SSMs, RNNs, or any encoder stack.
