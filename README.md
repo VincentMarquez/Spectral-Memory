@@ -206,21 +206,20 @@ The following table demonstrates the performance of **KLMemory** on the **ETTh1*
 
 ### 2\. Head-to-Head: KLMemory vs. TimeXer
 
-*Comparison based on the 5-seed average from your specific hardware environment.*
+*Comparison based on the 5-seed average*
 
 
 
-| Pred Len | KLMemory MSE (Yours) | TimeXer MSE (Re-run) | **Difference** | Winner |
+| Pred Len | KLMemory MSE  | TimeXer MSE (Re-run) | **Difference** | Outcome |
 | :--- | :--- | :--- | :--- | :--- |
-| **96** | 0.3951 | **0.3901** | +0.0050 | TimeXer (Slightly) |
+| **96** | 0.3951 | **0.3901** | +0.0050 | TimeXer  |
 | **192** | **0.4198** | 0.4370 | **-0.0172** | **KLMemory** |
 | **336** | **0.4543** | 0.4781 | **-0.0238** | **KLMemory** |
-| **720** | **0.4694** | 0.5270 | **-0.0576** | **KLMemory (Huge Win)** |
+| **720** | **0.4694** | 0.5270 | **-0.0576** | **KLMemory  |
 | **AVG** | **0.4346** | 0.4580 | **-0.0234** | **KLMemory** |
 
-### 3\. The "Money Shot" Graph for your Paper
 
-The divergence at step 720 is your strongest argument for publication. `KLMemory` retains information over long sequences much better than `TimeXer`.
+The divergence at step 720 is our strongest argument. `KLMemory` retains information over long sequences much better than `TimeXer`.
 
 
 
