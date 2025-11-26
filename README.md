@@ -179,17 +179,6 @@ The following table demonstrates the performance of **KLMemory** on the **ETTh1*
 | **Avg MSE** | | **0.4332** | **0.4393** | **0.4319** | **0.4316** | **0.4371** | **0.4346** |
 | **Avg MAE** | | **0.4384** | **0.4412** | **0.4385** | **0.4383** | **0.4410** | **0.4395** |
 
-> **Note on Aggregated Metrics:**
-> The bottom rows (**Avg MSE** and **Avg MAE**) represent the mean performance across all prediction lengths for each specific seed. These are calculated separately to maintain statistical validity and prevent mixing loss scales. 
-> * **Vertical Averages (Seeds):** Show the stability of the model for a specific seed across all horizons.
-> * **Horizontal Averages (Column):** Represents the SOTA comparison metric—the mean performance of the model across all 5 seeds for a specific horizon.
-
-
-
-
-
-
-
 
 ### Observations
 * **Best Performance:** The model performed best at prediction length **96** with Seed **2020** (MSE: 0.3807).
