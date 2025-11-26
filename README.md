@@ -112,7 +112,7 @@ all baselines. Results are averaged from all prediction lengths S = {96, 192, 33
 
 
 ---
-### **Table 4: Dataset Descriptions **
+### Table 4: Dataset Descriptions 
 
 *Dim = number of variables. Dataset Size = (Train, Val, Test). Prediction Lengths = forecasting horizons.*
 
