@@ -184,7 +184,7 @@ The following table demonstrates the performance of **KLMemory** on the **ETTh1*
 * **Outliers:** Seed 2020 had a significant spike in error at prediction length **720** (0.5009 MSE) compared to the other seeds in that bracket.
 
 
-### 1\. TimeXer Performance (ETTh1 - Your Re-run)
+### 1\. TimeXer Performance (ETTh1)
 
 **Seed 2023** at prediction length **720** was a massive outlier (MSE 0.601), which indicates `TimeXer` might suffer from instability in long-term forecasting on this dataset.
 
