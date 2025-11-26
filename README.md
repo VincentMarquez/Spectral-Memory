@@ -1,80 +1,67 @@
 # The Spectrum Remembers
 
-To the best of our knowledge, no prior work combines online spectral decomposition, differentiable tokenization of frequency components, and direct reinjection of those tokens into the model's attention mechanism.
+Spectral Memory is a simple memory module that converts training-trajectory statistics into a small set of Spectral Memory Tokens (SMTs) for long-range forecasting.
 
-**Spectral Memory** is a potentialy new memory mechanism 
-It introduces a **general spectral memory architecture** that compresses historical hidden states using online Karhunen–Loève decomposition and transforms the dominant spectral modes into **learnable memory tokens**.
+Instead of storing sequence content (recurrent states, KV caches, or SSM hidden states), Spectral Memory stores a compressed summary of how the model’s representations evolve across training batches. Each training batch is summarized through attention pooling, these summaries are collected in a history buffer, and a Karhunen–Loève (K-L) decomposition extracts the dominant spectral modes. A small learnable MLP maps these modes into SMTs, which are prepended to the model’s context at inference.
 
-Spectral Memory works as a plug-in module inside Transformers, SSMs, RNNs, or any encoder stack.
-
----
-
-## What Makes Spectral Memory 
-
-### ** Spectral Memory Tokens (SMTs)**
-
-Spectral Memory introduces a new memory object: **Spectral Memory Tokens**, derived from the dominant eigenmodes of the hidden-state history.
-
-These are **not**:
-
-* attention keys
-* recurrent hidden states
-* SSM state vectors
-
-Instead, they are **spectral modes shaped into learnable memory tokens.**
+This repository implements the method on the ETTh1 dataset using the official Time-Series-Library Transformer backbone. The module runs on consumer hardware and requires no pretraining.
 
 ---
 
-### ** Full Spectral Memory Pipeline**
+## What Spectral Memory Is
 
-Spectral Memory is **not PCA**, **not SVD**, and **not a low-rank trick**.
-It is a complete architectural memory mechanism:
-
-```
-Historical Hidden States → Covariance Kernel
-→ KL Decomposition → Top Spectral Modes
-→ Learnable Mixer → Memory Tokens → Reinjection
-```
-
-No prior architecture uses this pipeline.
+Spectral Memory Tokens (SMTs) are prefix tokens formed from the K-L modes of the training-trajectory history. They are not recurrent hidden states, attention keys/values, or SSM states. They represent global summaries of how the model behaved across many batches during training.
 
 ---
 
-### ** Architecture-Agnostic**
+## Spectral Memory Pipeline
 
-Spectral Memory slots into any sequence model:
+The method follows this sequence:
 
-* Transformers (Autoformer, PatchTST, Informer, etc.)
-* SSMs (S4, S5, Mamba)
-* RNN/GRU/LSTM stacks
-* Hybrid models
-* Custom research architectures
+Training batches → attention pooling → history buffer  
+→ K-L decomposition → top K spectral modes  
+→ learnable MLP projection → M spectral memory tokens  
+→ SMTs prepended to the model’s input at inference
 
-It operates **independently** of attention, recurrence, or SSM update rules.
+The K-L step is fixed and non-trainable. Only the projection MLP and the backbone model receive gradients.
 
----
-
-### ** Long-Range Memory With Spectral Stability**
-
-Spectral Memory stores the most persistent spectral patterns, enabling:
-
-* strong long-range memory
-* noise suppression
-* stable context retention
-* significant memory compression (**O(T·d) → O(k·d)**)
-* improved performance even in shallow models
-
-Ideal for long-term forecasting and long-context modeling.
+The novelty is in applying K-L to training-trajectory summaries and converting the resulting components into prefix tokens consumable by the attention mechanism.
 
 ---
 
-## Why Use Spectral Memory?
+## Architecture Scope
 
-* **Consistent ETTh1 improvements** with minimal architectural cost
-* **Drop-in module** — no redesign of the backbone
-* **Interpretable memory** (eigenmodes correspond to real temporal patterns)
-* **Works on consumer hardware (CPU/MPS)**
-* **Compatible with Patch embeddings, SSM filters, and attention blocks**
+Conceptually the module can supply prefix tokens to any sequence model that uses attention. In this repository we evaluate only the Transformer-based forecaster from the Time-Series-Library on the ETTh1 benchmark. Extensions to other architectures are left for future work.
+
+---
+
+## Behavior on ETTh1
+
+Under the official Time-Series-Library configuration (seq_len = 96, pred_len ∈ {96, 192, 336, 720}), Spectral Memory achieves an average MSE of 0.434. This is competitive with strong baselines under identical training budgets and adds only a small computational overhead.
+
+These results are limited to a single dataset and should be treated as early-stage evidence rather than broad benchmark coverage.
+
+---
+
+## Relation to Other Memory Types
+
+Spectral Memory differs from common memory mechanisms as follows:
+
+- Attention KV stores token-level hidden states
+- Recurrent and SSM memories store compressed sequence states
+- Retrieval memories store external content
+- Spectral Memory stores training-trajectory summaries written during training and read at inference
+
+This places it in the “training-trajectory memory” category described in the paper.
+
+---
+
+## Why Use Spectral Memory
+
+- Simple module that adds a small number of prefix tokens
+- Uses mathematical structure (K-L) combined with a learnable projection
+- Runs efficiently on CPUs and Apple Silicon
+- Provides interpretable spectral components that reflect global training dynamics
 
 ---
 
