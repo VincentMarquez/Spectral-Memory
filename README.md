@@ -160,17 +160,37 @@ Additional datasets (Weather, ECL, Traffic, ILI) forthcoming.
 Based on the training logs provided, here is the breakdown of the **MSE** (Mean Squared Error) and **MAE** (Mean Absolute Error) for the `KLMemory` model on the `ETTh1` dataset, separated by prediction length (`pred_len`) and random seed.
 
 ### KLMemory Performance (ETTh1)
-Pred Len,Metric,Seed 2019,Seed 2020,Seed 2021,Seed 2022,Seed 2023,Average
-96,MSE,0.4180,0.3807,0.3903,0.4031,0.3834,0.3951
-96,MAE,0.4228,0.4018,0.4115,0.4156,0.4029,0.4109
-192,MSE,0.4177,0.4199,0.4186,0.4201,0.4227,0.4198
-192,MAE,0.4278,0.4283,0.4270,0.4273,0.4312,0.4283
-336,MSE,0.4512,0.4556,0.4507,0.4523,0.4616,0.4543
-336,MAE,0.4470,0.4486,0.4456,0.4486,0.4521,0.4484
-720,MSE,0.4461,0.5009,0.4680,0.4511,0.4807,0.4694
-720,MAE,0.4561,0.4862,0.4698,0.4618,0.4779,0.4704
-Avg MSE,,0.4332,0.4393,0.4319,0.4316,0.4371,0.4346
-Avg MAE,,0.4384,0.4412,0.4385,0.4383,0.4410,0.4395
+## Performance Benchmarks
+
+The following table demonstrates the performance of **KLMemory** on the **ETTh1** dataset. Results are reported across four standard prediction lengths (96, 192, 336, 720) using 5 distinct random seeds to ensure robustness.
+
+### ETTh1 Evaluation Results
+
+| Pred Len | Metric | Seed 2019 | Seed 2020 | Seed 2021 | Seed 2022 | Seed 2023 | Average |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 96 | MSE | 0.4180 | 0.3807 | 0.3903 | 0.4031 | 0.3834 | 0.3951 |
+| 96 | MAE | 0.4228 | 0.4018 | 0.4115 | 0.4156 | 0.4029 | 0.4109 |
+| 192 | MSE | 0.4177 | 0.4199 | 0.4186 | 0.4201 | 0.4227 | 0.4198 |
+| 192 | MAE | 0.4278 | 0.4283 | 0.4270 | 0.4273 | 0.4312 | 0.4283 |
+| 336 | MSE | 0.4512 | 0.4556 | 0.4507 | 0.4523 | 0.4616 | 0.4543 |
+| 336 | MAE | 0.4470 | 0.4486 | 0.4456 | 0.4486 | 0.4521 | 0.4484 |
+| 720 | MSE | 0.4461 | 0.5009 | 0.4680 | 0.4511 | 0.4807 | 0.4694 |
+| 720 | MAE | 0.4561 | 0.4862 | 0.4698 | 0.4618 | 0.4779 | 0.4704 |
+| **Avg MSE** | | **0.4332** | **0.4393** | **0.4319** | **0.4316** | **0.4371** | **0.4346** |
+| **Avg MAE** | | **0.4384** | **0.4412** | **0.4385** | **0.4383** | **0.4410** | **0.4395** |
+
+> **Note on Aggregated Metrics:**
+> The bottom rows (**Avg MSE** and **Avg MAE**) represent the mean performance across all prediction lengths for each specific seed. These are calculated separately to maintain statistical validity and prevent mixing loss scales. 
+> * **Vertical Averages (Seeds):** Show the stability of the model for a specific seed across all horizons.
+> * **Horizontal Averages (Column):** Represents the SOTA comparison metric—the mean performance of the model across all 5 seeds for a specific horizon.
+
+
+
+
+
+
+
+
 ### Observations
 * **Best Performance:** The model performed best at prediction length **96** with Seed **2020** (MSE: 0.3807).
 * **Stability:** The results for length **192** are remarkably stable across all seeds, with MSEs only ranging from 0.4177 to 0.4227.
