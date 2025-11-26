@@ -141,7 +141,7 @@ all baselines. Results are averaged from all prediction lengths S = {96, 192, 33
 
 
 
-### ETTh1 Results by Seed
+### KLMemory Results by Seed (run 1)
 
 | Horizon | Seed 2019 | Seed 2020 | Seed 2021 | Average |
 |---------|-----------|-----------|-----------|---------|
