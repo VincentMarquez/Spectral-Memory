@@ -102,7 +102,38 @@ Spectral Memory is a **new memory class** because no other mechanism performs **
 | PatchTST | 0.469 |
 | Autoformer | 0.496 |
 
-*Baseline results taken from respective publications under identical experimental settings (seq_len=96, pred_len ∈ {96, 192, 336, 720}).*
+*Baseline results taken from respective Timexer table 3 publications under identical experimental settings (seq_len=96, pred_len ∈ {96, 192, 336, 720}).*Table 3: Multivariate forecasting results. We compare extensive competitive models under different
+prediction lengths following the setting of iTransformer [23]. The look-back length L is set to 96 for
+all baselines. Results are averaged from all prediction lengths S = {96, 192, 336, 720}.
+
+iTransformer
+
+Table 4: Detailed dataset descriptions. Dim denotes the variate number of each dataset. Dataset
+Size denotes the total number of time points in (Train, Validation, Test) split respectively. Prediction
+Length denotes the future time points to be predicted and four prediction settings are included in each
+dataset. Frequency denotes the sampling interval of time points.
+Table 4: Detailed dataset descriptions. Dim denotes the variate number of each dataset. Dataset
+Size denotes the total number of time points in (Train, Validation, Test) split respectively. Prediction
+Length denotes the future time points to be predicted and four prediction settings are included in each
+dataset. Frequency denotes the sampling interval of time points.
+Dataset Dim Prediction Length Dataset Size Frequency Information
+ETTh1, ETTh2 7 {96, 192, 336, 720} (8545, 2881, 2881) Hourly Electricity
+ETTm1, ETTm2 7 {96, 192, 336, 720} (34465, 11521, 11521) 15min Electricity
+Exchange 8 {96, 192, 336, 720} (5120, 665, 1422) Daily Economy
+Weather 21 {96, 192, 336, 720} (36792, 5271, 10540) 10min Weather
+ECL 321 {96, 192, 336, 720} (18317, 2633, 5261) Hourly Electricity
+Traffic 862 {96, 192, 336, 720} (12185, 1757, 3509) Hourly Transportation
+Solar-Energy 137 {96, 192, 336, 720} (36601, 5161, 10417) 10min Energy
+PEMS03 358 {12, 24, 48, 96} (15617, 5135, 5135) 5min Transportation
+PEMS04 307 {12, 24, 48, 96} (10172, 3375, 3375) 5min Transportation
+PEMS07 883 {12, 24, 48, 96} (16911, 5622, 5622) 5min Transportation
+PEMS08 170 {12, 24, 48, 96} (10690, 3548, 3548) 5min Transportation
+Market-Merchant 285 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
+Market-Wealth 485 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
+Market-Finance 405 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
+Market-Terminal 307 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
+Market-Payment 759 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
+Market-Customer 395 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
 
 ### ETTh1 Results by Seed
 
