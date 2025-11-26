@@ -190,6 +190,11 @@ The following table demonstrates the performance of **KLMemory** on the **ETTh1*
 The following table benchmarks **TimeXer** on the **ETTh1** dataset. Results are reported across four standard prediction lengths (96, 192, 336, 720) using 5 distinct random seeds.
 
 ### TimeXer Evaluation Results (ETTh1)
+## Performance Benchmarks
+
+The following table benchmarks **TimeXer** on the **ETTh1** dataset. Results are reported across four standard prediction lengths (96, 192, 336, 720) using 5 distinct random seeds.
+
+### TimeXer Evaluation Results (ETTh1)
 
 | Pred Len | Metric | Seed 2019 | Seed 2020 | Seed 2021 | Seed 2022 | Seed 2023 | Average |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -204,11 +209,9 @@ The following table benchmarks **TimeXer** on the **ETTh1** dataset. Results are
 | **Avg MSE** | | **0.4589** | **0.4506** | **0.4572** | **0.4477** | **0.4757** | **0.4580** |
 | **Avg MAE** | | **0.4542** | **0.4471** | **0.4511** | **0.4469** | **0.4612** | **0.4521** |
 
-> **Experimental Notes:**
-> * **Apples-to-Apples Configuration:** To ensure a fair comparison, TimeXer was evaluated using standard configurations **without** dataset-specific hyperparameter tuning. This matches the protocol used for KLMemory, ensuring that results reflect architectural differences rather than optimization strategies.
-> * **Stability Observation:** Seed 2023 at prediction length 720 presented a significant outlier (**MSE 0.6010**), indicating potential instability in TimeXer for long-term forecasting on this dataset.
-
-
+> **Experimental Notes**
+> * **Apples-to-apples configuration.** TimeXer is evaluated using the standard Time-Series-Library configuration on ETTh1, without dataset-specific hyperparameter tuning. KLMemory uses the same protocol, so differences reflect architectural behavior rather than aggressive per-model tuning.
+> * **Stability observation.** Seed 2023 at prediction length 720 exhibits a noticeable error spike (MSE 0.6010), suggesting that TimeXer can be unstable for long-horizon forecasting on ETTh1, whereas KLMemory remains more stable in this regime.
 
 -----
 
