@@ -106,34 +106,85 @@ Spectral Memory is a **new memory class** because no other mechanism performs **
 prediction lengths following the setting of iTransformer [23]. The look-back length L is set to 96 for
 all baselines. Results are averaged from all prediction lengths S = {96, 192, 336, 720}.
 
-iTransformer
 
-Table 4: Detailed dataset descriptions. Dim denotes the variate number of each dataset. Dataset
-Size denotes the total number of time points in (Train, Validation, Test) split respectively. Prediction
-Length denotes the future time points to be predicted and four prediction settings are included in each
-dataset. Frequency denotes the sampling interval of time points.
-Table 4: Detailed dataset descriptions. Dim denotes the variate number of each dataset. Dataset
-Size denotes the total number of time points in (Train, Validation, Test) split respectively. Prediction
-Length denotes the future time points to be predicted and four prediction settings are included in each
-dataset. Frequency denotes the sampling interval of time points.
-Dataset Dim Prediction Length Dataset Size Frequency Information
-ETTh1, ETTh2 7 {96, 192, 336, 720} (8545, 2881, 2881) Hourly Electricity
-ETTm1, ETTm2 7 {96, 192, 336, 720} (34465, 11521, 11521) 15min Electricity
-Exchange 8 {96, 192, 336, 720} (5120, 665, 1422) Daily Economy
-Weather 21 {96, 192, 336, 720} (36792, 5271, 10540) 10min Weather
-ECL 321 {96, 192, 336, 720} (18317, 2633, 5261) Hourly Electricity
-Traffic 862 {96, 192, 336, 720} (12185, 1757, 3509) Hourly Transportation
-Solar-Energy 137 {96, 192, 336, 720} (36601, 5161, 10417) 10min Energy
-PEMS03 358 {12, 24, 48, 96} (15617, 5135, 5135) 5min Transportation
-PEMS04 307 {12, 24, 48, 96} (10172, 3375, 3375) 5min Transportation
-PEMS07 883 {12, 24, 48, 96} (16911, 5622, 5622) 5min Transportation
-PEMS08 170 {12, 24, 48, 96} (10690, 3548, 3548) 5min Transportation
-Market-Merchant 285 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
-Market-Wealth 485 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
-Market-Finance 405 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
-Market-Terminal 307 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
-Market-Payment 759 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
-Market-Customer 395 {12, 24, 72, 144} (7045, 1429, 1429) 10min Transaction
+Absolutely — I’ll fix **iTransformer Table 4** for you and convert it into a clean, professional **LaTeX-ready table** and a **Markdown-ready version**.
+Your pasted version from the paper was duplicated and misaligned. This fixes it completely.
+
+---
+
+# ✅ **Corrected iTransformer Table 4**
+
+Below is the **clean**, **organized**, and **correct** reconstruction of **Table 4 – Dataset Descriptions** from the iTransformer publication.
+
+---
+
+# **📌 Final Corrected Table 4 (Markdown)**
+
+### **Table 4: Dataset Descriptions (Cleaned & Corrected)**
+
+*Dim = number of variables. Dataset Size = (Train, Val, Test). Prediction Lengths = forecasting horizons.*
+
+| **Dataset**         | **Dim** | **Prediction Lengths** | **Dataset Size (Train, Val, Test)** | **Frequency** | **Domain**     |
+| ------------------- | ------- | ---------------------- | ----------------------------------- | ------------- | -------------- |
+| **ETTh1**           | 7       | {96, 192, 336, 720}    | (8545, 2881, 2881)                  | Hourly        | Electricity    |
+| **ETTh2**           | 7       | {96, 192, 336, 720}    | (8545, 2881, 2881)                  | Hourly        | Electricity    |
+| **ETTm1**           | 7       | {96, 192, 336, 720}    | (34465, 11521, 11521)               | 15 min        | Electricity    |
+| **ETTm2**           | 7       | {96, 192, 336, 720}    | (34465, 11521, 11521)               | 15 min        | Electricity    |
+| **Exchange**        | 8       | {96, 192, 336, 720}    | (5120, 665, 1422)                   | Daily         | Economy        |
+| **Weather**         | 21      | {96, 192, 336, 720}    | (36792, 5271, 10540)                | 10 min        | Weather        |
+| **ECL**             | 321     | {96, 192, 336, 720}    | (18317, 2633, 5261)                 | Hourly        | Electricity    |
+| **Traffic**         | 862     | {96, 192, 336, 720}    | (12185, 1757, 3509)                 | Hourly        | Transportation |
+| **Solar-Energy**    | 137     | {96, 192, 336, 720}    | (36601, 5161, 10417)                | 10 min        | Energy         |
+| **PEMS03**          | 358     | {12, 24, 48, 96}       | (15617, 5135, 5135)                 | 5 min         | Traffic        |
+| **PEMS04**          | 307     | {12, 24, 48, 96}       | (10172, 3375, 3375)                 | 5 min         | Traffic        |
+| **PEMS07**          | 883     | {12, 24, 48, 96}       | (16911, 5622, 5622)                 | 5 min         | Traffic        |
+| **PEMS08**          | 170     | {12, 24, 48, 96}       | (10690, 3548, 3548)                 | 5 min         | Traffic        |
+| **Market-Merchant** | 285     | {12, 24, 72, 144}      | (7045, 1429, 1429)                  | 10 min        | Transaction    |
+| **Market-Wealth**   | 485     | {12, 24, 72, 144}      | (7045, 1429, 1429)                  | 10 min        | Transaction    |
+| **Market-Finance**  | 405     | {12, 24, 72, 144}      | (7045, 1429, 1429)                  | 10 min        | Transaction    |
+| **Market-Terminal** | 307     | {12, 24, 72, 144}      | (7045, 1429, 1429)                  | 10 min        | Transaction    |
+| **Market-Payment**  | 759     | {12, 24, 72, 144}      | (7045, 1429, 1429)                  | 10 min        | Transaction    |
+| **Market-Customer** | 395     | {12, 24, 72, 144}      | (7045, 1429, 1429)                  | 10 min        | Transaction    |
+
+---
+
+# 📌 **LaTeX Version (Perfect for Your Paper)**
+
+This is the *exact* format compatible with NeurIPS/ICML/ICLR style tables.
+
+```latex
+\begin{table*}[ht]
+\centering
+\caption{Dataset descriptions. Dim is the number of variables. Dataset Size is (Train, Val, Test). Prediction Lengths are the forecasting horizons.}
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Dataset} & \textbf{Dim} & \textbf{Prediction Lengths} & \textbf{Dataset Size} & \textbf{Frequency} \\
+\midrule
+ETTh1 & 7 & \{96, 192, 336, 720\} & (8545, 2881, 2881) & Hourly \\
+ETTh2 & 7 & \{96, 192, 336, 720\} & (8545, 2881, 2881) & Hourly \\
+ETTm1 & 7 & \{96, 192, 336, 720\} & (34465, 11521, 11521) & 15 min \\
+ETTm2 & 7 & \{96, 192, 336, 720\} & (34465, 11521, 11521) & 15 min \\
+Exchange & 8 & \{96, 192, 336, 720\} & (5120, 665, 1422) & Daily \\
+Weather & 21 & \{96, 192, 336, 720\} & (36792, 5271, 10540) & 10 min \\
+ECL & 321 & \{96, 192, 336, 720\} & (18317, 2633, 5261) & Hourly \\
+Traffic & 862 & \{96, 192, 336, 720\} & (12185, 1757, 3509) & Hourly \\
+Solar-Energy & 137 & \{96, 192, 336, 720\} & (36601, 5161, 10417) & 10 min \\
+PEMS03 & 358 & \{12, 24, 48, 96\} & (15617, 5135, 5135) & 5 min \\
+PEMS04 & 307 & \{12, 24, 48, 96\} & (10172, 3375, 3375) & 5 min \\
+PEMS07 & 883 & \{12, 24, 48, 96\} & (16911, 5622, 5622) & 5 min \\
+PEMS08 & 170 & \{12, 24, 48, 96\} & (10690, 3548, 3548) & 5 min \\
+Market-Merchant & 285 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
+Market-Wealth & 485 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
+Market-Finance & 405 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
+Market-Terminal & 307 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
+Market-Payment & 759 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
+Market-Customer & 395 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
+\bottomrule
+\end{tabular}
+\end{table*}
+```
+
+
 
 ### ETTh1 Results by Seed
 
