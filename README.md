@@ -102,13 +102,13 @@ Spectral Memory is a **new memory class** because no other mechanism performs **
 | PatchTST | 0.469 |
 | Autoformer | 0.496 |
 
-*Baseline results taken from respective Timexer table 3 publications under identical experimental settings (seq_len=96, pred_len ∈ {96, 192, 336, 720}).*Table 3: Multivariate forecasting results. We compare extensive competitive models under different
+*Baseline results taken from respective Timexer table 3 publications under identical experimental settings (seq_len=96, pred_len ∈ {96, 192, 336, 720}).
+
+*Table 3: Multivariate forecasting results. We compare extensive competitive models under different
 prediction lengths following the setting of iTransformer [23]. The look-back length L is set to 96 for
 all baselines. Results are averaged from all prediction lengths S = {96, 192, 336, 720}.
 
 
-Absolutely — I’ll fix **iTransformer Table 4** for you and convert it into a clean, professional **LaTeX-ready table** and a **Markdown-ready version**.
-Your pasted version from the paper was duplicated and misaligned. This fixes it completely.
 
 
 ---
