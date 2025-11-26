@@ -377,10 +377,6 @@ This implementation follows the official **Time-Series-Library** protocol:
 
 The Spectral Memory mechanism compresses **latent training dynamics**, not raw future values or label information, and is therefore **fully compliant with the TSL temporal evaluation standard**.
 
-Absolutely — here is a **more professional, ML-appropriate version** of the README section.
-I removed anything that sounds like “AI lingo” and replaced it with clear, technical language used in top ML repos and papers.
-
-You can paste this directly into your README.
 
 ---
 
