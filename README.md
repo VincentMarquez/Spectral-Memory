@@ -1,6 +1,7 @@
 # The Spectrum Remembers
 
-Spectral Memory is a simple memory module that converts training-trajectory statistics into a small set of Spectral Memory Tokens (SMTs) for long-range forecasting.
+This repository implements Spectral Memory, a spectral memory architecture for long-range time series forecasting. The core algorithm is KLMemory (Karhunen–Loève Memory), which performs K-L decomposition over training-trajectory summaries and generates Spectral Memory Tokens that are prepended to the model’s context at inference.
+
 
 Instead of storing sequence content (recurrent states, KV caches, or SSM hidden states), Spectral Memory stores a compressed summary of how the model’s representations evolve across training batches. Each training batch is summarized through attention pooling, these summaries are collected in a history buffer, and a Karhunen–Loève (K-L) decomposition extracts the dominant spectral modes. A small learnable MLP maps these modes into SMTs, which are prepended to the model’s context at inference.
 
@@ -74,7 +75,6 @@ This places it in the “training-trajectory memory” category described in the
 | PCA/SVD tricks | Offline compression             | Not learnable, not dynamic       | Online, learnable, task-adaptive  |
 | Convolutions   | Local filters                   | Limited receptive field          | Global, frequency-aware structure |
 
-Spectral Memory is a **Potentialy new memory class** because no other mechanism performs **online spectral extraction → learnable tokenization → reinjection**.
 
 ## Results
 
