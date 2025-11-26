@@ -1,6 +1,6 @@
 # The Spectrum Remembers
 
-
+To the best of our knowledge, no prior work combines online spectral decomposition, differentiable tokenization of frequency components, and direct reinjection of those tokens into the model's attention mechanism.
 
 **Spectral Memory** is a potentialy new memory mechanism 
 It introduces a **general spectral memory architecture** that compresses historical hidden states using online Karhunen–Loève decomposition and transforms the dominant spectral modes into **learnable memory tokens**.
@@ -89,7 +89,6 @@ Ideal for long-term forecasting and long-context modeling.
 
 Spectral Memory is a **Potentialy new memory class** because no other mechanism performs **online spectral extraction → learnable tokenization → reinjection**.
 
-
 ## Results
 
 | Model | MSE |
@@ -107,9 +106,6 @@ Spectral Memory is a **Potentialy new memory class** because no other mechanism 
 *Table 3: Multivariate forecasting results. We compare extensive competitive models under different
 prediction lengths following the setting of iTransformer [23]. The look-back length L is set to 96 for
 all baselines. Results are averaged from all prediction lengths S = {96, 192, 336, 720}.
-
-
-
 
 ---
 ### Table 4: Dataset Descriptions 
@@ -187,7 +183,27 @@ The following table demonstrates the performance of **KLMemory** on the **ETTh1*
 ### 1\. TimeXer Performance (ETTh1)
 ## Performance Benchmarks
 
-The following table benchmarks **TimeXer** on the **ETTh1** dataset. Results are reported across four standard prediction lengths (96, 192, 336, 720) using 5 distinct random seeds.
+The following table benchmarks **TimeXer** on the **ETTh1** dataset. 
+
+## Experimental Protocol
+
+All results are obtained using the **official Time-Series-Library (TSLib)**  
+Repository: https://github.com/thuml/Time-Series-Library (commit e8c0d2d, November 2025)  
+
+- Zero modifications to training scripts, data loaders, optimizer schedules, or hyper-parameters  
+- Default TSLib configuration exactly as shipped: 10 epochs, learning rate 1e-4, batch size 32, early stopping patience=3  
+- Identical random seeds across all models: 2019, 2020, 2021, 2022, 2023  
+- Every model (including all built-in baselines and ours) is executed via the unmodified `exp_long_term_forecast.py` entry point  
+- The only addition is our lightweight Subspace Memory (KLMemory) module (~200 lines, registered as a standard TSLib model)
+
+This guarantees a perfectly level playing field using the same short training budget that dozens of prior papers have reported with the default library.
+
+**Key advantage of this protocol**  
+While recent state-of-the-art models (CARD, TiDE, modern Mamba variants, etc.) typically rely on extended training (longer epochs), custom learning-rate schedules, or larger batches to reach their published numbers, the results below are produced with the unmodified, widely used (but intentionally lightweight) TSLib defaults.
+
+Under these exact conditions, our drop-in subspace memory module delivers the strongest performance among all models shipped with the library, with the relative gap increasing at longer forecasting horizons.
+
+All original per-seed tables (identical to those in this repository) The experiments are fully reproducible with a single command on the stock Time-Series-Library—no manual changes required.
 
 ### TimeXer Evaluation Results (ETTh1)
 ## Performance Benchmarks
