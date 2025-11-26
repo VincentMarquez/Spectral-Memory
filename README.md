@@ -185,22 +185,30 @@ The following table demonstrates the performance of **KLMemory** on the **ETTh1*
 
 
 ### 1\. TimeXer Performance (ETTh1)
+## Performance Benchmarks
 
-**Seed 2023** at prediction length **720** was a massive outlier (MSE 0.601), which indicates `TimeXer` might suffer from instability in long-term forecasting on this dataset.
+The following table benchmarks **TimeXer** on the **ETTh1** dataset. Results are reported across four standard prediction lengths (96, 192, 336, 720) using 5 distinct random seeds.
 
-| Pred Len | Metric | Seed 2019 | Seed 2020 | Seed 2021 | Seed 2022 | Seed 2023 | **Average** |
+### TimeXer Evaluation Results (ETTh1)
+
+| Pred Len | Metric | Seed 2019 | Seed 2020 | Seed 2021 | Seed 2022 | Seed 2023 | Average |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **96** | **MSE** | 0.3878 | 0.3903 | 0.3912 | 0.3928 | 0.3882 | **0.3901** |
-| | **MAE** | 0.4072 | 0.4087 | 0.4092 | 0.4099 | 0.4084 | **0.4087** |
-| | | | | | | | |
-| **192** | **MSE** | 0.4376 | 0.4352 | 0.4375 | 0.4352 | 0.4396 | **0.4370** |
-| | **MAE** | 0.4396 | 0.4361 | 0.4382 | 0.4364 | 0.4397 | **0.4380** |
-| | | | | | | | |
-| **336** | **MSE** | 0.4717 | 0.4764 | 0.4910 | 0.4773 | 0.4741 | **0.4781** |
-| | **MAE** | 0.4550 | 0.4563 | 0.4617 | 0.4630 | 0.4483 | **0.4569** |
-| | | | | | | | |
-| **720** | **MSE** | 0.5387 | 0.5005 | 0.5092 | 0.4854 | **0.6010** | **0.5270** |
-| | **MAE** | 0.5149 | 0.4874 | 0.4955 | 0.4781 | 0.5482 | **0.5048** |
+| 96 | MSE | 0.3878 | 0.3903 | 0.3912 | 0.3928 | 0.3882 | 0.3901 |
+| 96 | MAE | 0.4072 | 0.4087 | 0.4092 | 0.4099 | 0.4084 | 0.4087 |
+| 192 | MSE | 0.4376 | 0.4352 | 0.4375 | 0.4352 | 0.4396 | 0.4370 |
+| 192 | MAE | 0.4396 | 0.4361 | 0.4382 | 0.4364 | 0.4397 | 0.4380 |
+| 336 | MSE | 0.4717 | 0.4764 | 0.4910 | 0.4773 | 0.4741 | 0.4781 |
+| 336 | MAE | 0.4550 | 0.4563 | 0.4617 | 0.4630 | 0.4483 | 0.4569 |
+| 720 | MSE | 0.5387 | 0.5005 | 0.5092 | 0.4854 | 0.6010 | 0.5270 |
+| 720 | MAE | 0.5149 | 0.4874 | 0.4955 | 0.4781 | 0.5482 | 0.5048 |
+| **Avg MSE** | | **0.4589** | **0.4506** | **0.4572** | **0.4477** | **0.4757** | **0.4580** |
+| **Avg MAE** | | **0.4542** | **0.4471** | **0.4511** | **0.4469** | **0.4612** | **0.4521** |
+
+> **Experimental Notes:**
+> * **Apples-to-Apples Configuration:** To ensure a fair comparison, TimeXer was evaluated using standard configurations **without** dataset-specific hyperparameter tuning. This matches the protocol used for KLMemory, ensuring that results reflect architectural differences rather than optimization strategies.
+> * **Stability Observation:** Seed 2023 at prediction length 720 presented a significant outlier (**MSE 0.6010**), indicating potential instability in TimeXer for long-term forecasting on this dataset.
+
+
 
 -----
 
