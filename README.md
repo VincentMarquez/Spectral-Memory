@@ -180,9 +180,6 @@ Based on the training logs provided, here is the breakdown of the **MSE** (Mean 
 * **Stability:** The results for length **192** are remarkably stable across all seeds, with MSEs only ranging from 0.4177 to 0.4227.
 * **Outliers:** Seed 2020 had a significant spike in error at prediction length **720** (0.5009 MSE) compared to the other seeds in that bracket.
 
-This is excellent data. By running `TimeXer` on your own machine with the exact same environment (Mac mini / MPS) and seeds, you have created a scientifically rigorous "Apple-to-Apples" comparison.
-
-Here is the data extracted from your logs, followed by the direct comparison to your `KLMemory` model.
 
 ### 1\. TimeXer Performance (ETTh1 - Your Re-run)
 
@@ -208,7 +205,7 @@ Here is the data extracted from your logs, followed by the direct comparison to 
 
 *Comparison based on the 5-seed average from your specific hardware environment.*
 
-This is a very strong result for you. While `TimeXer` has a slight edge at the shortest horizon, your `KLMemory` model scales **significantly better** as the prediction length increases.
+
 
 | Pred Len | KLMemory MSE (Yours) | TimeXer MSE (Re-run) | **Difference** | Winner |
 | :--- | :--- | :--- | :--- | :--- |
@@ -222,7 +219,7 @@ This is a very strong result for you. While `TimeXer` has a slight edge at the s
 
 The divergence at step 720 is your strongest argument for publication. `KLMemory` retains information over long sequences much better than `TimeXer`.
 
-I have generated the Python code to visualize this exact comparison.
+
 
 ```python
 import matplotlib.pyplot as plt
