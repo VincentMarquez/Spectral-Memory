@@ -234,7 +234,8 @@ pip install torch pandas numpy scikit-learn
 wget https://github.com/zhouhaoyi/ETDataset/raw/main/ETT-small/ETTh1.csv -P ./dataset/
 ```
 
-### Run (Apple Silicon)
+### Run (Apple Silicon)ETTh1
+
 
 ```bash
 export PYTORCH_ENABLE_MPS_FALLBACK=1
@@ -272,6 +273,42 @@ done
 done
 ```
 
+### Run (Apple Silicon) exchange_rate
+
+```bash
+export PYTORCH_ENABLE_MPS_FALLBACK=1
+
+for seed in 2019 2020 2021 2022 2023; do
+  python run.py \
+    --task_name long_term_forecast \
+    --is_training 1 \
+    --root_path ./dataset/exchange_rate/ \
+    --data_path exchange_rate.csv \
+    --model_id Exchange96_seed${seed} \
+    --model KLMemory \
+    --data custom \
+    --features M \
+    --seq_len 96 \
+    --label_len 48 \
+    --pred_len 96 \
+    --enc_in 8 \
+    --dec_in 8 \
+    --c_out 8 \
+    --e_layers 2 \
+    --d_layers 1 \
+    --d_ff 2048 \
+    --factor 3 \
+    --dropout 0.1 \
+    --train_epochs 10 \
+    --patience 3 \
+    --batch_size 32 \
+    --learning_rate 0.0001 \
+    --itr 1 \
+    --use_gpu false \
+    --gpu_type mps \
+    --seed $seed
+done
+```
 
 
 
