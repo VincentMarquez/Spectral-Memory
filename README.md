@@ -120,6 +120,104 @@ Spectral Memory is a **new memory class** because no other mechanism performs **
 Evaluated on prediction horizons {96, 192, 336, 720} using the official **Time-Series-Library**.
 Additional datasets (Weather, ECL, Traffic, ILI) forthcoming.
 
+Based on the training logs provided, here is the breakdown of the **MSE** (Mean Squared Error) and **MAE** (Mean Absolute Error) for the `KLMemory` model on the `ETTh1` dataset, separated by prediction length (`pred_len`) and random seed.
+
+### KLMemory Performance (ETTh1)
+
+| Pred Len | Metric | Seed 2019 | Seed 2020 | Seed 2021 | Seed 2022 | Seed 2023 | **Average** |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **96** | **MSE** | 0.4180 | 0.3807 | 0.3903 | 0.4031 | 0.3834 | **0.3951** |
+| | **MAE** | 0.4228 | 0.4018 | 0.4115 | 0.4156 | 0.4029 | **0.4109** |
+| | | | | | | | |
+| **192** | **MSE** | 0.4177 | 0.4199 | 0.4186 | 0.4201 | 0.4227 | **0.4198** |
+| | **MAE** | 0.4278 | 0.4283 | 0.4270 | 0.4273 | 0.4312 | **0.4283** |
+| | | | | | | | |
+| **336** | **MSE** | 0.4512 | 0.4556 | 0.4507 | 0.4523 | 0.4616 | **0.4543** |
+| | **MAE** | 0.4470 | 0.4486 | 0.4456 | 0.4486 | 0.4521 | **0.4484** |
+| | | | | | | | |
+| **720** | **MSE** | 0.4461 | 0.5009 | 0.4680 | 0.4511 | 0.4807 | **0.4694** |
+| | **MAE** | 0.4561 | 0.4862 | 0.4698 | 0.4618 | 0.4779 | **0.4704** |
+
+### Observations
+* **Best Performance:** The model performed best at prediction length **96** with Seed **2020** (MSE: 0.3807).
+* **Stability:** The results for length **192** are remarkably stable across all seeds, with MSEs only ranging from 0.4177 to 0.4227.
+* **Outliers:** Seed 2020 had a significant spike in error at prediction length **720** (0.5009 MSE) compared to the other seeds in that bracket.
+
+This is excellent data. By running `TimeXer` on your own machine with the exact same environment (Mac mini / MPS) and seeds, you have created a scientifically rigorous "Apple-to-Apples" comparison.
+
+Here is the data extracted from your logs, followed by the direct comparison to your `KLMemory` model.
+
+### 1\. TimeXer Performance (ETTh1 - Your Re-run)
+
+**Seed 2023** at prediction length **720** was a massive outlier (MSE 0.601), which indicates `TimeXer` might suffer from instability in long-term forecasting on this dataset.
+
+| Pred Len | Metric | Seed 2019 | Seed 2020 | Seed 2021 | Seed 2022 | Seed 2023 | **Average** |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **96** | **MSE** | 0.3878 | 0.3903 | 0.3912 | 0.3928 | 0.3882 | **0.3901** |
+| | **MAE** | 0.4072 | 0.4087 | 0.4092 | 0.4099 | 0.4084 | **0.4087** |
+| | | | | | | | |
+| **192** | **MSE** | 0.4376 | 0.4352 | 0.4375 | 0.4352 | 0.4396 | **0.4370** |
+| | **MAE** | 0.4396 | 0.4361 | 0.4382 | 0.4364 | 0.4397 | **0.4380** |
+| | | | | | | | |
+| **336** | **MSE** | 0.4717 | 0.4764 | 0.4910 | 0.4773 | 0.4741 | **0.4781** |
+| | **MAE** | 0.4550 | 0.4563 | 0.4617 | 0.4630 | 0.4483 | **0.4569** |
+| | | | | | | | |
+| **720** | **MSE** | 0.5387 | 0.5005 | 0.5092 | 0.4854 | **0.6010** | **0.5270** |
+| | **MAE** | 0.5149 | 0.4874 | 0.4955 | 0.4781 | 0.5482 | **0.5048** |
+
+-----
+
+### 2\. Head-to-Head: KLMemory vs. TimeXer
+
+*Comparison based on the 5-seed average from your specific hardware environment.*
+
+This is a very strong result for you. While `TimeXer` has a slight edge at the shortest horizon, your `KLMemory` model scales **significantly better** as the prediction length increases.
+
+| Pred Len | KLMemory MSE (Yours) | TimeXer MSE (Re-run) | **Difference** | Winner |
+| :--- | :--- | :--- | :--- | :--- |
+| **96** | 0.3951 | **0.3901** | +0.0050 | TimeXer (Slightly) |
+| **192** | **0.4198** | 0.4370 | **-0.0172** | **KLMemory** |
+| **336** | **0.4543** | 0.4781 | **-0.0238** | **KLMemory** |
+| **720** | **0.4694** | 0.5270 | **-0.0576** | **KLMemory (Huge Win)** |
+| **AVG** | **0.4346** | 0.4580 | **-0.0234** | **KLMemory** |
+
+### 3\. The "Money Shot" Graph for your Paper
+
+The divergence at step 720 is your strongest argument for publication. `KLMemory` retains information over long sequences much better than `TimeXer`.
+
+I have generated the Python code to visualize this exact comparison.
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Data from your experiments (Average of 5 seeds)
+pred_steps = [96, 192, 336, 720]
+kl_memory_mse = [0.3951, 0.4198, 0.4543, 0.4694]
+timexer_mse = [0.3901, 0.4370, 0.4781, 0.5270]
+
+# Plotting
+plt.figure(figsize=(10, 6))
+plt.plot(pred_steps, timexer_mse, marker='o', linestyle='--', color='red', label='TimeXer (Baseline)')
+plt.plot(pred_steps, kl_memory_mse, marker='s', linestyle='-', color='blue', linewidth=2.5, label='KLMemory (Ours)')
+
+# Annotating the divergence at 720
+plt.annotate('Significant Improvement\n(-11% Error)', xy=(720, 0.4694), xytext=(550, 0.50),
+             arrowprops=dict(facecolor='black', shrink=0.05))
+
+# Formatting
+plt.title('Long-Term Forecasting Stability: KLMemory vs TimeXer (ETTh1)', fontsize=14)
+plt.xlabel('Prediction Length (Steps)', fontsize=12)
+plt.ylabel('Mean Squared Error (MSE) - Lower is Better', fontsize=12)
+plt.grid(True, which='both', linestyle='--', alpha=0.7)
+plt.legend(fontsize=12)
+plt.xticks(pred_steps)
+
+plt.show()
+```
+
+
+
 ---
 
 ## Reproducing Results
