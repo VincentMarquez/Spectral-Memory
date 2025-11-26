@@ -110,17 +110,9 @@ all baselines. Results are averaged from all prediction lengths S = {96, 192, 33
 Absolutely — I’ll fix **iTransformer Table 4** for you and convert it into a clean, professional **LaTeX-ready table** and a **Markdown-ready version**.
 Your pasted version from the paper was duplicated and misaligned. This fixes it completely.
 
----
-
-# ✅ **Corrected iTransformer Table 4**
-
-Below is the **clean**, **organized**, and **correct** reconstruction of **Table 4 – Dataset Descriptions** from the iTransformer publication.
 
 ---
-
-# **📌 Final Corrected Table 4 (Markdown)**
-
-### **Table 4: Dataset Descriptions (Cleaned & Corrected)**
+### **Table 4: Dataset Descriptions **
 
 *Dim = number of variables. Dataset Size = (Train, Val, Test). Prediction Lengths = forecasting horizons.*
 
@@ -146,43 +138,6 @@ Below is the **clean**, **organized**, and **correct** reconstruction of **Table
 | **Market-Payment**  | 759     | {12, 24, 72, 144}      | (7045, 1429, 1429)                  | 10 min        | Transaction    |
 | **Market-Customer** | 395     | {12, 24, 72, 144}      | (7045, 1429, 1429)                  | 10 min        | Transaction    |
 
----
-
-# 📌 **LaTeX Version (Perfect for Your Paper)**
-
-This is the *exact* format compatible with NeurIPS/ICML/ICLR style tables.
-
-```latex
-\begin{table*}[ht]
-\centering
-\caption{Dataset descriptions. Dim is the number of variables. Dataset Size is (Train, Val, Test). Prediction Lengths are the forecasting horizons.}
-\begin{tabular}{lcccc}
-\toprule
-\textbf{Dataset} & \textbf{Dim} & \textbf{Prediction Lengths} & \textbf{Dataset Size} & \textbf{Frequency} \\
-\midrule
-ETTh1 & 7 & \{96, 192, 336, 720\} & (8545, 2881, 2881) & Hourly \\
-ETTh2 & 7 & \{96, 192, 336, 720\} & (8545, 2881, 2881) & Hourly \\
-ETTm1 & 7 & \{96, 192, 336, 720\} & (34465, 11521, 11521) & 15 min \\
-ETTm2 & 7 & \{96, 192, 336, 720\} & (34465, 11521, 11521) & 15 min \\
-Exchange & 8 & \{96, 192, 336, 720\} & (5120, 665, 1422) & Daily \\
-Weather & 21 & \{96, 192, 336, 720\} & (36792, 5271, 10540) & 10 min \\
-ECL & 321 & \{96, 192, 336, 720\} & (18317, 2633, 5261) & Hourly \\
-Traffic & 862 & \{96, 192, 336, 720\} & (12185, 1757, 3509) & Hourly \\
-Solar-Energy & 137 & \{96, 192, 336, 720\} & (36601, 5161, 10417) & 10 min \\
-PEMS03 & 358 & \{12, 24, 48, 96\} & (15617, 5135, 5135) & 5 min \\
-PEMS04 & 307 & \{12, 24, 48, 96\} & (10172, 3375, 3375) & 5 min \\
-PEMS07 & 883 & \{12, 24, 48, 96\} & (16911, 5622, 5622) & 5 min \\
-PEMS08 & 170 & \{12, 24, 48, 96\} & (10690, 3548, 3548) & 5 min \\
-Market-Merchant & 285 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
-Market-Wealth & 485 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
-Market-Finance & 405 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
-Market-Terminal & 307 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
-Market-Payment & 759 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
-Market-Customer & 395 & \{12, 24, 72, 144\} & (7045, 1429, 1429) & 10 min \\
-\bottomrule
-\end{tabular}
-\end{table*}
-```
 
 
 
