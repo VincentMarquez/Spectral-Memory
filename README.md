@@ -242,36 +242,6 @@ The divergence at step 720 is our strongest argument. `KLMemory` retains informa
 
 
 
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-
-# Data from your experiments (Average of 5 seeds)
-pred_steps = [96, 192, 336, 720]
-kl_memory_mse = [0.3951, 0.4198, 0.4543, 0.4694]
-timexer_mse = [0.3901, 0.4370, 0.4781, 0.5270]
-
-# Plotting
-plt.figure(figsize=(10, 6))
-plt.plot(pred_steps, timexer_mse, marker='o', linestyle='--', color='red', label='TimeXer (Baseline)')
-plt.plot(pred_steps, kl_memory_mse, marker='s', linestyle='-', color='blue', linewidth=2.5, label='KLMemory (Ours)')
-
-# Annotating the divergence at 720
-plt.annotate('Significant Improvement\n(-11% Error)', xy=(720, 0.4694), xytext=(550, 0.50),
-             arrowprops=dict(facecolor='black', shrink=0.05))
-
-# Formatting
-plt.title('Long-Term Forecasting Stability: KLMemory vs TimeXer (ETTh1)', fontsize=14)
-plt.xlabel('Prediction Length (Steps)', fontsize=12)
-plt.ylabel('Mean Squared Error (MSE) - Lower is Better', fontsize=12)
-plt.grid(True, which='both', linestyle='--', alpha=0.7)
-plt.legend(fontsize=12)
-plt.xticks(pred_steps)
-
-plt.show()
-```
-
-
 
 ---
 
