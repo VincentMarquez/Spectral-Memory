@@ -317,7 +317,7 @@ class Model(nn.Module):
         )
         nn.init.normal_(self.pos_encoding, std=0.02)
 
-        # ---- KL Memory (paper-faithful) ----
+        # ---- KL Memory ----
         kl_strategy = getattr(configs, "kl_strategy", "empirical")
         kl_tau = getattr(configs, "kl_tau", 64.0)
         kl_kernel = getattr(configs, "kl_kernel", "exp")
@@ -415,7 +415,7 @@ class Model(nn.Module):
 
     def reset_memory(self):
         """
-        Reset VMSM / KLMemory state between phases (train/val/test)
+        Reset KLMemory state between phases (train/val/test)
         or between independent runs.
         """
         if hasattr(self, "memory"):
