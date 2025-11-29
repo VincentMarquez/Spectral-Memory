@@ -5,18 +5,18 @@
 # 
 # This module demonstrates Karhunen-Loève (K-L) decomposition applied
 # to problems in quantum mechanics, statistical physics, and dynamical
-# systems. The same spectral memory principles used in VMSM for sequence
+# systems. The same spectral memory principles used for sequence
 # modeling have deep roots in physics.
 #
 # STRUCTURE:
 #   Part I:   Classical K-L Infrastructure (NumPy) - Physics foundations
 #   Part II:  Physics Examples 1-5 - Demonstrating K-L applications
-#   Part III: VMSM Architecture (PyTorch) - THE NOVEL CONTRIBUTION
-#   Part IV:  Example 6 - Full VMSM pipeline with learnable projection
+#   Part III: Architecture (PyTorch) - THE NOVEL CONTRIBUTION
+#   Part IV:  Example 6 - Full pipeline with learnable projection
 #
 # KEY DISTINCTION:
 #   - Part I & II are CLASSICAL (Karhunen 1946, Loève 1948)
-#   - Part III & IV are VMSM's CONTRIBUTION: learnable projection
+#   - Part III & IV are CONTRIBUTION: learnable projection
 #     that maps K-L components → task-specific memory tokens
 #
 # The pipeline:
