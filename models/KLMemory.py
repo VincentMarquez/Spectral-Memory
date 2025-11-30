@@ -36,7 +36,7 @@ class KLMemory(nn.Module):
         d_model: int,
         memory_depth: int = 3000,
         n_components: int = 16,
-        memory_tokens: int = 8,
+        memory_tokens: int = 4,
         kl_strategy: str = "empirical",   # "empirical" or "kernel"
         tau: float = 64.0,                # GP timescale for kernelized K-L
         kernel_type: str = "exp",         # "exp", "gauss", or "matern"
