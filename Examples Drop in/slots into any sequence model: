@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # -------------------------------------------------------------
-# 1) BASIC TIME-KERNEL K-L MEMORY 
+# 1) TIME-KERNEL K-L MEMORY 
 # -------------------------------------------------------------
 class SimpleKLMemory(nn.Module):
     def __init__(self, d_model, n_components=8, memory_tokens=4, tau=64.0):
