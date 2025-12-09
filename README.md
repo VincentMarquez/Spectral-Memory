@@ -1,38 +1,48 @@
 # The Spectrum Remembers
 
-This repository implements Spectral Memory, a spectral memory architecture for long-range time series forecasting. The core algorithm is KLMemory (Karhunen–Loève Memory), which performs K-L decomposition over training-trajectory summaries and generates Spectral Memory Tokens that are prepended to the model’s context at inference.
+This repository provides the implementation of **Spectral Memory**, a mechanism for long-range sequence modeling that derives its information not from the input sequence, but from the **training trajectory** itself. The core module, **KLMemory**, performs a Karhunen–Loève decomposition over accumulated training-time summaries and converts the resulting spectral components into **Spectral Memory Tokens (SMTs)** that are prepended to the model’s context at inference.
 
+Unlike recurrent states, KV caches, or state-space memories—which store information written during inference—Spectral Memory stores a compressed record of **how the model’s hidden states evolve across training**. Each batch is summarized through a learned attention-pooling mechanism, appended to a persistent history buffer, and decomposed via a frozen K-L operator to extract the dominant temporal modes. A small learnable MLP then maps these modes into SMTs used as prefix tokens.
 
-Instead of storing sequence content (recurrent states, KV caches, or SSM hidden states), Spectral Memory stores a compressed summary of how the model’s representations evolve across training batches. Each training batch is summarized through attention pooling, these summaries are collected in a history buffer, and a Karhunen–Loève (K-L) decomposition extracts the dominant spectral modes. A small learnable MLP maps these modes into SMTs, which are prepended to the model’s context at inference.
+These SMTs serve a **dual function**:
 
-This repository implements the method on the ETTh1 dataset using the official Time-Series-Library Transformer backbone. The module runs on consumer hardware and requires no pretraining.
+* **Global Context:** They give the Transformer access to structured, long-range information that no individual input window contains—summaries of global training dynamics rather than sequence content.
+* **Geometric Regularization:** Because K-L modes are variance-optimal, injecting them as prefix tokens shapes the model’s representation geometry, improving stability and long-horizon forecasting through a low-rank spectral prior.
 
----
-
-## What Spectral Memory Is
-
-Spectral Memory Tokens (SMTs) are prefix tokens formed from the K-L modes of the training-trajectory history. They are not recurrent hidden states, attention keys/values, or SSM states. They represent global summaries of how the model behaved across many batches during training.
+This implementation evaluates Spectral Memory on the ETTh1 dataset using the official Time-Series-Library backbone. The module introduces minimal computational overhead, requires no pretraining, and runs efficiently on consumer hardware.
 
 ---
 
-## Spectral Memory Pipeline
+## **What Spectral Memory Is**
 
-The method follows this sequence:
+Spectral Memory Tokens (SMTs) are prefix tokens formed from the top K K-L components of the training-trajectory history.
+They are **not**:
 
-Training batches → attention pooling → history buffer  
-→ K-L decomposition → top K spectral modes  
-→ learnable MLP projection → M spectral memory tokens  
-→ SMTs prepended to the model’s input at inference
+* recurrent hidden states
+* attention key/value caches
+* SSM latent states
 
-The K-L step is fixed and non-trainable. Only the projection MLP and the backbone model receive gradients.
-
-The novelty is in applying K-L to training-trajectory summaries and converting the resulting components into prefix tokens consumable by the attention mechanism.
+Instead, SMTs summarize *how the model behaved over thousands of training steps*, providing a source of information fundamentally different from anything in a single input sequence.
 
 ---
 
-## Architecture Scope
+## **Spectral Memory Pipeline**
 
-Conceptually the module can supply prefix tokens to any sequence model that uses attention. In this repository we evaluate only the Transformer-based forecaster from the Time-Series-Library on the ETTh1 benchmark. Extensions to other architectures are left for future work.
+**Training batches → attention pooling → history buffer
+→ frozen K-L decomposition → top-K spectral modes
+→ learnable MLP projection → M spectral memory tokens
+→ SMTs prepended at inference**
+
+The K-L stage is fixed, non-trainable, and executed in float64 for stability. Only the projection MLP and the forecasting backbone receive gradients.
+
+The key novelty lies in extracting spectral structure from the **training trajectory**—a previously unused memory axis—and turning it into prefix tokens that the model can selectively attend to.
+
+---
+
+## **Architecture Scope**
+
+Spectral Memory is conceptually compatible with any attention-based sequence model: Transformers, hybrids, or architectures with prefix-tuning interfaces.
+This repository evaluates the module on the Time-Series-Library Transformer for ETTh1 forecasting; extensions to other backbones and domains remain open for future work.
 
 ---
 
