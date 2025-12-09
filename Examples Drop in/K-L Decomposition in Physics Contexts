@@ -1,6 +1,6 @@
 
 # =============================================================
-# K-L Decomposition in Physics Contexts + VMSM Architecture
+# K-L Decomposition in Physics Contexts
 # =============================================================
 # 
 # This module demonstrates Karhunen-Loève (K-L) decomposition applied
@@ -1014,13 +1014,13 @@ if __name__ == "__main__":
     lams, _ = mem.get_spectrum()
     print(f"  Top eigenvalues: {lams[:4].round(4)}")
     
-    # Run VMSM example (PyTorch)
+    # Run example (PyTorch)
     if TORCH_AVAILABLE:
         print("\n" + "="*60)
         print("PART III: VMSM WITH LEARNABLE PROJECTION")
         print("="*60)
         
-        example_vmsm_pipeline()
+        example_pipeline()
     else:
         print("\n" + "="*60)
         print("PART III: SKIPPED (PyTorch not available)")
