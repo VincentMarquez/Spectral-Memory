@@ -482,15 +482,6 @@ Performance remains in the degraded range (~2.9 MSE), demonstrating that the mod
 
 ---
 
-# Overall Conclusion
-
-KLMemory shows:
-
-* **Strong performance with valid inputs** (0.086 MSE)
-* **Expected failure when historical information is removed** (~2.9 MSE)
-* **No dependence on decoder inputs, timestamps, or cross-batch memory**
-* **No signs of target leakage, future leakage, or normalization leakage**
-
 These results confirm that the reported forecasts are **valid, leak-free, and the model is not exploiting any unintended shortcuts**.
 
 | **Mode**                         | **Description**                                                                            | **Encoder Input** | **Decoder Input** | **Time Features** | **Memory**          | **MSE**    | **Interpretation**                           |
