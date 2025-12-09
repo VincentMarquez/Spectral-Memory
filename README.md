@@ -522,7 +522,7 @@ These results confirm that the reported forecasts are **valid, leak-free, and th
 
 ```bibtex
 @article{marquez2025spectral,
-  title   = {The Spectrum Remembers: Spectral Memory for Long-Context Sequence Modeling},
+  title   = {The Spectrum Remembers: Spectral Memory,
   author  = {Marquez, Vincent},
   year    = {2025},
   note    = {GitHub Repository}
