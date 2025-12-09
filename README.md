@@ -504,20 +504,6 @@ These results confirm that the reported forecasts are **valid, leak-free, and th
 
 
 
-
----
-
-## Comparison to Related Work
-
-| Method                    | Basis Type            | Learnable | Adaptive    | Notes                |
-| ------------------------- | --------------------- | --------- | ----------- | -------------------- |
-| Autoformer                | Trend/Seasonal        | ✗         | Fixed       | Strong 2021 baseline |
-| iTransformer              | Inverted Attention    | ✓         | Task-only   | Current SOTA         |
-| PatchTST                  | Patch Embeddings      | ✓         | Task-only   | Very competitive     |
-| **Spectral Memory (Ours)**| KL Eigenbasis + Mixer | ✓         | Data + Task | Simple, fast, robust |
-
----
-
 ## Citation
 
 ```bibtex
