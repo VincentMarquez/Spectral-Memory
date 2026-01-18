@@ -12,10 +12,7 @@ import random
 import numpy as np
 
 if __name__ == '__main__':
-    fix_seed = 2021
-    random.seed(fix_seed)
-    torch.manual_seed(fix_seed)
-    np.random.seed(fix_seed)
+
 
     parser = argparse.ArgumentParser(description='TimesNet')
 
@@ -157,8 +154,25 @@ if __name__ == '__main__':
     parser.add_argument('--alpha', type=float, default=0.1, help='KNN for Graph Construction')
     parser.add_argument('--top_p', type=float, default=0.5, help='Dynamic Routing in MoE')
     parser.add_argument('--pos', type=int, choices=[0, 1], default=1, help='Positional Embedding. Set pos to 0 or 1')
+    parser.add_argument('--memory_tokens', type=int, default=1, help='Number of SMTs (M)')
+    parser.add_argument('--n_components', type=int, default=16, help='Number of KL modes (K)')
+    parser.add_argument('--memory_depth', type=int, default=3000, help='Max history length T')
+    # With this:
+    parser.add_argument('--use_geometric_encoder', action='store_true', default=True,
+    help='Use ManifoldFormer (geodesic). Use --no_geometric_encoder for Transformer.')
+    parser.add_argument('--no_geometric_encoder', dest='use_geometric_encoder', action='store_false',
+    help='Use standard Transformer (Euclidean) instead of ManifoldFormer')
+    parser.add_argument('--curvature', type=float, default=1.0,
+    help='Poincaré ball curvature (higher = more curved)')
+
 
     args = parser.parse_args()
+
+    if args.seed is not None:
+        random.seed(args.seed)
+        np.random.seed(args.seed)
+        torch.manual_seed(args.seed)
+
     if torch.cuda.is_available() and args.use_gpu:
         args.device = torch.device('cuda:{}'.format(args.gpu))
         print('Using GPU')
@@ -255,4 +269,3 @@ if __name__ == '__main__':
             torch.backends.mps.empty_cache()
         elif args.gpu_type == 'cuda':
             torch.cuda.empty_cache()
-
